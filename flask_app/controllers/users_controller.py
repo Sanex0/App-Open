@@ -200,6 +200,41 @@ def listar_aperturas():
     except Exception:
         totals_map = {}
 
+    # --- KPIs para los chips (ventas del día, total del día, arqueos abiertos, último arqueo) ---
+    ventas_count = 0
+    ventas_total_hoy = 0
+    arqueos_abiertos_count = 0
+    ultimo_arqueo_creado = None
+
+    try:
+        if allowed_caja_ids:
+            placeholders = ','.join(['%s'] * len(allowed_caja_ids))
+            # Contar ventas del día (usamos la fecha de la apertura asociada como aproximación)
+            q_ventas = (
+                f"SELECT COUNT(v.id_ventas) AS cnt, IFNULL(SUM(v.total_ventas),0) AS total "
+                f"FROM vta_ventas v JOIN vta_apertura a ON v.id_apertura = a.id_apertura "
+                f"WHERE a.id_caja_fk IN ({placeholders}) AND DATE(a.fecha_inicio_apertura) = CURDATE();"
+            )
+            res_v = connectToMySQL('sistemas').query_db(q_ventas, tuple(allowed_caja_ids))
+            if res_v and isinstance(res_v, list) and len(res_v) > 0:
+                ventas_count = int(res_v[0].get('cnt', 0) or 0)
+                ventas_total_hoy = int(res_v[0].get('total', 0) or 0)
+
+            # contar aperturas abiertas para esas cajas
+            q_abiertos = f"SELECT COUNT(*) AS cnt FROM vta_apertura WHERE estado_apertura = 1 AND id_caja_fk IN ({placeholders});"
+            res_a = connectToMySQL('sistemas').query_db(q_abiertos, tuple(allowed_caja_ids))
+            if res_a and isinstance(res_a, list) and len(res_a) > 0:
+                arqueos_abiertos_count = int(res_a[0].get('cnt', 0) or 0)
+
+            # obtener la fecha del último arqueo creado (más reciente fecha_inicio_apertura)
+            q_ultimo = f"SELECT fecha_inicio_apertura FROM vta_apertura WHERE id_caja_fk IN ({placeholders}) ORDER BY fecha_inicio_apertura DESC LIMIT 1;"
+            res_u = connectToMySQL('sistemas').query_db(q_ultimo, tuple(allowed_caja_ids))
+            if res_u and isinstance(res_u, list) and len(res_u) > 0:
+                ultimo_arqueo_creado = res_u[0].get('fecha_inicio_apertura')
+    except Exception as e:
+        if app.config.get('LOGIN_DEBUG'):
+            print(f"[APERTURAS KPI DEBUG] Error calculando KPIs: {e}")
+
     most_recent = aperturas[0] if aperturas else None
     # Si venimos de cerrar una apertura, se guarda en session para mostrar el resumen modal
     apertura_resumen_id = None
@@ -208,7 +243,7 @@ def listar_aperturas():
     except Exception:
         apertura_resumen_id = None
 
-    return render_template('aperturas.html', aperturas=aperturas, cajas=cajas, totals_map=totals_map, allowed_cajas=allowed_cajas, most_recent=most_recent, apertura_resumen_id=apertura_resumen_id)
+    return render_template('aperturas.html', aperturas=aperturas, cajas=cajas, totals_map=totals_map, allowed_cajas=allowed_cajas, most_recent=most_recent, apertura_resumen_id=apertura_resumen_id, ventas_count=ventas_count, arqueos_abiertos_count=arqueos_abiertos_count, ultimo_arqueo_creado=ultimo_arqueo_creado)
 
 
 @app.route('/api/caja/<int:id_caja>/productos')

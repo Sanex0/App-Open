@@ -1,0 +1,403 @@
+        :root {
+            /* Primary palette (unified to requested gradient) */
+            --primary-blue: #006bc2; /* main blue */
+            --secondary-blue: #005da6; /* darker blue */
+            --primary-blue-gradient: linear-gradient(160deg, #006bc2 0%, #005da6 100%);
+            /* Accent palette (more saturated) */
+            --accent-1: #0fb8b5; /* teal */
+            --accent-2: #00bcd4; /* cyan */
+            --accent-3: #ff5722; /* vivid orange */
+            /* Reds for closed variants - unified to a single tone */
+            --red-1: #e11d48;
+            --red-2: #e11d48;
+            --red-3: #e11d48;
+            --light-blue: #eaf4ff;
+            --text-dark: #063856;
+            --text-muted: #6c757d;
+            --card-radius: 14px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f6f9;
+        }
+
+        /* Header con Gradiente */
+        .header-gradient {
+            background: var(--primary-blue-gradient);
+            padding: 1rem 1rem;
+            color: white;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 8px 25px rgba(0, 91, 168, 0.18);
+        }
+
+        /* Compact header (Option A) */
+        .app-header-compact {
+            border-radius: 0 0 14px 14px;
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            backdrop-filter: saturate(120%) blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            transition: box-shadow .18s ease, padding .12s ease;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+        }
+        .app-header-compact .header-logo { max-height: 46px; padding: 4px; border-radius: 8px; }
+        .app-header-compact .app-header-center { min-width: 260px; }
+        .app-header-compact .app-header-right .btn { font-size: .92rem; }
+        /* Header left / right helpers for alignment and responsive wrapping */
+        .app-header-left { display: flex; align-items: center; gap: .6rem; }
+        .app-header-right { margin-left: auto; display: flex; gap: .5rem; align-items: center; flex-wrap: nowrap; }
+        /* Ensure content below header doesn't sit under it on small screens */
+        .app-header-compact + .container { padding-top: .5rem; }
+
+        @media (max-width: 767px) {
+            .app-header-compact { padding: .5rem .75rem; }
+            .app-header-compact .app-header-center { display: none; }
+            .app-header-compact .header-logo { max-height: 40px; margin-right: .5rem; }
+            .app-header-compact .app-header-right .btn { padding: .28rem .6rem; font-size: .86rem; }
+            .app-header-compact + .container { padding-top: .4rem; }
+            /* Allow right-side header buttons to wrap on very small screens */
+            .app-header-right { flex-wrap: wrap; gap: .35rem; justify-content: flex-end; width: 100%; }
+            .app-header-right .btn { margin-top: .25rem; }
+            .app-header-left { flex: 0 0 auto; }
+        }
+
+        /* Small / Extra small screens: stack header into a single column */
+        @media (max-width: 575.98px) {
+            .app-header-compact .container { flex-direction: column; align-items: flex-start; gap: .5rem; }
+            .app-header-compact .app-header-left { width: 100%; display: flex; align-items: center; gap: .6rem; }
+            .app-header-compact .app-header-left .d-flex { width: auto; }
+            .app-header-compact .app-header-right { width: 100%; display: flex; gap: .5rem; justify-content: flex-start; }
+            /* Make header buttons stack nicely and be tappable on mobile */
+            .app-header-right .btn { width: 100%; text-align: center; padding-left: .6rem; padding-right: .6rem; }
+            .app-header-right .btn .bi { margin-right: .35rem; }
+            /* Ensure cards and lists are full width single column (ensures 'todo en una sola columna') */
+            .apertura-item-card { width: 100%; }
+        }
+
+        /* Larger screens: prefer the title in a single line and give it extra width */
+        @media (min-width: 768px) {
+            .app-header-left h1, .app-header-left .small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .app-header-left { min-width: 420px; max-width: 60%; }
+            .app-header-compact .app-header-center { min-width: 320px; }
+        }
+
+        /* Slightly smaller header on extra small screens */
+        @media (max-width: 420px) {
+            .app-header-compact { padding: .45rem .6rem; }
+            .app-header-compact .header-logo { max-height: 36px; }
+        }
+        
+        /* Botones del Header */
+        .btn-header-primary {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary-blue);
+            font-weight: 600;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-header-primary:hover {
+            background: #fff;
+            transform: translateY(-2px);
+            color: var(--secondary-blue);
+        }
+        .btn-header-outline {
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            transition: all 0.2s;
+        }
+        .btn-header-outline:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+                        background: var(--primary-blue-gradient);
+        }
+
+        /* KPI Card (Última actividad) */
+        .kpi-card {
+            background: #fff;
+                        background: var(--primary-blue-gradient);
+            padding: 20px 25px;
+            box-shadow: 0 6px 22px rgba(3,34,63,0.06);
+            border-left: 6px solid var(--primary-blue);
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+            display: flex;
+            align-items: center;
+                        background: linear-gradient(180deg, rgba(0,107,194,0.12), rgba(0,93,166,0.06));
+            transition: transform 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-icon {
+            background: linear-gradient(135deg, rgba(234,244,255,1) 0%, rgba(225,246,255,1) 100%);
+            color: var(--primary-blue);
+            width: 56px; height: 56px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 18px;
+            box-shadow: 0 2px 6px rgba(3,34,63,0.06);
+        }
+
+        .kpi-card .badge {
+            box-shadow: 0 2px 6px rgba(11,48,82,0.06);
+            font-weight: 600;
+        }
+
+        /* Make chips/badges slightly smaller and match card accents when inside a card */
+        .apertura-item-card .badge,
+        .kpi-card .badge {
+            padding: .25rem .6rem;
+            font-size: .88rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 6px rgba(3,34,63,0.05);
+            font-weight: 600;
+        }
+
+        /* Badges matching card variants (accent colors) */
+        .apertura-item-card.variant-accent-1 .badge {
+            background: linear-gradient(90deg, rgba(15,184,181,0.98), rgba(15,184,181,0.86));
+            color: #fff; border: none;
+        }
+        .apertura-item-card.variant-accent-2 .badge {
+            background: linear-gradient(90deg, rgba(0,188,212,0.98), rgba(0,188,212,0.86));
+            color: #012; border: none;
+        }
+        .apertura-item-card.variant-accent-3 .badge {
+            background: linear-gradient(90deg, rgba(255,87,34,0.98), rgba(255,87,34,0.86));
+            color: #fff; border: none;
+        }
+
+        /* For open cards, use the primary blue for badges */
+        .apertura-item-card.is-open .badge {
+            background: var(--primary-blue-gradient);
+            color: #fff; border: none;
+        }
+
+        /* Closed cards: unified red tone for all variants */
+        .apertura-item-card.is-closed .badge {
+            background: linear-gradient(90deg, rgba(225,29,72,0.98), rgba(200,20,60,0.86));
+            color: #fff; border: none;
+        }
+
+        /* Buttons that match card accents */
+        .apertura-item-card .btn-action {
+            font-family: inherit;
+            font-weight: 600;
+            font-size: .92rem;
+            padding: .32rem .9rem;
+            border-radius: 999px;
+            box-shadow: 0 6px 12px rgba(3,34,63,0.06);
+            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+            color: #fff;
+            border: 0;
+        }
+        .apertura-item-card .btn-action:active { transform: translateY(1px); }
+
+        /* Variant accents for buttons */
+        .apertura-item-card.variant-accent-1 .btn-action {
+            background: linear-gradient(90deg, rgba(15,184,181,0.98), rgba(15,184,181,0.86));
+            color: #fff;
+        }
+        .apertura-item-card.variant-accent-2 .btn-action {
+            background: linear-gradient(90deg, rgba(0,188,212,0.98), rgba(0,188,212,0.86));
+            color: #012;
+        }
+        .apertura-item-card.variant-accent-3 .btn-action {
+            background: linear-gradient(90deg, rgba(255,87,34,0.98), rgba(255,87,34,0.86));
+            color: #fff;
+        }
+
+        /* Buttons inside open cards use primary blue accent for emphasis */
+        .apertura-item-card.is-open .btn-action {
+            background: var(--primary-blue-gradient);
+            color: #fff;
+        }
+
+        /* Closed card buttons: unified red tone */
+        .apertura-item-card.is-closed .btn-action {
+            background: linear-gradient(90deg, rgba(225,29,72,0.98), rgba(200,20,60,0.86));
+            color: #fff;
+        }
+
+        /* Make sure these overrides don't clash with small screens (reduce shadow) */
+        @media (max-width: 576px) {
+            .apertura-item-card .btn-action { box-shadow: 0 2px 8px rgba(3,34,63,0.04); font-size: .88rem; padding: .28rem .7rem; }
+        }
+
+        /* Always-red close button */
+        .btn-close-action {
+            font-family: inherit;
+            font-weight: 700;
+            font-size: .9rem;
+            padding: .32rem .82rem;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(225,29,72,0.98), rgba(200,20,60,0.86));
+            color: #fff !important;
+            border: 0 !important;
+            box-shadow: 0 6px 12px rgba(225,29,72,0.08);
+            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+        }
+        .btn-close-action:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(225,29,72,0.12); }
+        .btn-close-action:active { transform: translateY(1px); }
+
+        @media (max-width: 576px) {
+            .btn-close-action { font-size: .86rem; padding: .28rem .6rem; box-shadow: 0 2px 8px rgba(225,29,72,0.06); }
+        }
+
+        /* Custom badge color helpers for KPI chips */
+        .badge-accent-1 { background: linear-gradient(90deg,var(--accent-1), rgba(15,184,181,0.85)); color: white; border: 0; }
+        .badge-accent-2 { background: linear-gradient(90deg,var(--accent-2), rgba(0,188,212,0.9)); color: #012; border: 0; }
+        .badge-accent-3 { background: linear-gradient(90deg,var(--accent-3), rgba(255,87,34,0.9)); color: white; border: 0; }
+        .badge-neutral { background: #6c757d; color: #fff; }
+
+        /* Badge animations */
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(6,123,255,0.15); }
+            70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(6,123,255,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(6,123,255,0); }
+        }
+        .badge.pulse { animation: pulse 1.8s infinite; }
+        .badge.pulse-strong { animation: pulse 1.2s infinite; }
+
+        /* Filas tipo Tarjeta (Reemplazo de Tabla) */
+        .apertura-item-card {
+            background: linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+            border-radius: var(--card-radius);
+            margin-bottom: 1rem;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 6px 18px rgba(2,48,84,0.04);
+            border: 1px solid rgba(13,86,156,0.06);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            transition: transform 0.18s, box-shadow 0.18s;
+            position: relative;
+            overflow: hidden;
+        }
+        .apertura-item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 36px rgba(2,48,84,0.08);
+            border-color: rgba(13,86,156,0.12);
+        }
+
+        /* Bordes por estado: azul para abiertas, rojo para cerradas */
+        .apertura-item-card.is-open {
+            border-color: rgba(0,107,194,0.28);
+            box-shadow: 0 10px 28px rgba(0,107,194,0.06);
+        }
+
+        .apertura-item-card.is-closed {
+            border-color: rgba(225,29,72,0.18);
+            box-shadow: 0 10px 28px rgba(225,29,72,0.06);
+        }
+
+        .apertura-item-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 8px; /* ocupa todo el alto y el espacio izquierdo */
+            background: linear-gradient(180deg, rgba(0,93,166,0.18), rgba(0,93,166,0.06));
+            border-top-left-radius: 14px; border-bottom-left-radius: 14px;
+        }
+
+        /* Color variants by state or by data attribute (e.g., data-caja) */
+        /* Open boxes use bright primary blue accent */
+        .apertura-item-card.is-open::before { background: linear-gradient(180deg, rgba(0,107,194,0.30), rgba(0,93,166,0.10)); }
+        /* Closed boxes: unified red accent for the left stripe */
+        .apertura-item-card.is-closed::before { background: linear-gradient(180deg, rgba(225,29,72,0.32), rgba(225,29,72,0.10)); }
+        /* For completeness, variant accents when not closed will use accent palette */
+        .apertura-item-card.variant-accent-1::before { background: linear-gradient(180deg, rgba(15,184,181,0.22), rgba(15,184,181,0.07)); }
+        .apertura-item-card.variant-accent-2::before { background: linear-gradient(180deg, rgba(0,188,212,0.22), rgba(0,188,212,0.07)); }
+        .apertura-item-card.variant-accent-3::before { background: linear-gradient(180deg, rgba(255,87,34,0.22), rgba(255,87,34,0.07)); }
+
+        /* Forzar color de la franja según estado (más específico y con prioridad) */
+        .apertura-item-card.is-open::before,
+        .apertura-item-card.is-open.variant-accent-1::before,
+        .apertura-item-card.is-open.variant-accent-2::before,
+        .apertura-item-card.is-open.variant-accent-3::before {
+            background: linear-gradient(180deg, rgba(0,107,194,0.30), rgba(0,93,166,0.10)) !important;
+        }
+
+        .apertura-item-card.is-closed::before,
+        .apertura-item-card.is-closed.variant-accent-1::before,
+        .apertura-item-card.is-closed.variant-accent-2::before,
+        .apertura-item-card.is-closed.variant-accent-3::before {
+            background: linear-gradient(180deg, rgba(225,29,72,0.32), rgba(225,29,72,0.10)) !important;
+        }
+
+        /* Columnas internas de la tarjeta */
+        .ap-col-id { font-weight: 700; color: #cbd5e1; width: 50px; font-size: 1.1rem; }
+        .ap-col-info { flex-grow: 1; min-width: 200px; }
+        .ap-col-info .caja-name { font-weight: 600; font-size: 1.05rem; color: var(--text-dark); }
+        .ap-col-status { width: 120px; text-align: center; }
+        .ap-col-dates { width: 200px; font-size: 0.85rem; color: var(--text-muted); text-align: right; }
+        .ap-col-total { width: 140px; text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--primary-blue); padding-right: 15px;}
+        .ap-col-actions { width: auto; }
+
+        /* Status badges improved */
+        .ap-col-status .badge { padding: .45rem .75rem; border-radius: 999px; font-weight:700; }
+        /* Status badges: reflect the same accent/border as the card */
+        .ap-col-status .bg-open {
+            background: linear-gradient(180deg, rgba(0,107,194,0.12), rgba(0,93,166,0.06));
+            color: var(--primary-blue);
+            border: 1px solid rgba(0,107,194,0.18);
+        }
+        /* Closed badges: uniform red color regardless of card variant */
+        .ap-col-status .bg-closed {
+            background: linear-gradient(180deg, rgba(225,29,72,0.22), rgba(225,29,72,0.08));
+            color: #7a0f2b;
+            border: 1px solid rgba(225,29,72,0.28);
+        }
+
+        /* Ensure all closed badges use the same text color for consistency */
+        .apertura-item-card.is-closed .badge,
+        .ap-col-status .bg-closed {
+            color: #ffffff !important;
+        }
+
+        /* Badges */
+        .badge-pill { border-radius: 50px; padding: 0.5em 1em; font-weight: 500; }
+        .badge.rounded-pill { font-size: .95rem; }
+        .bg-open { background-color: #d1e7dd; color: #0f5132; }
+        .bg-closed { background-color: #e2e3e5; color: #41464b; }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .apertura-item-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .ap-col-id, .ap-col-info, .ap-col-status, .ap-col-dates, .ap-col-total, .ap-col-actions {
+                width: 100%; text-align: left;
+            }
+            .ap-col-dates { text-align: left; display: flex; gap: 15px; }
+            .ap-col-total { font-size: 1.5rem; margin-top: 5px; }
+            .ap-col-actions { display: flex; gap: 10px; margin-top: 5px; }
+            /* On smaller screens keep the left accent but make it visible and well spaced */
+            .apertura-item-card::before {
+                display: block;
+                width: 6px;
+                left: 12px;
+                top: 12px;
+                bottom: 12px;
+                border-top-left-radius: 8px;
+                border-bottom-left-radius: 8px;
+                background: linear-gradient(180deg, rgba(0,93,166,0.14), rgba(0,93,166,0.04));
+                box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            }
+            .apertura-item-card { padding-left: 1.75rem; }
+            .ap-col-id { width: auto; }
+            .ap-col-total { text-align: left; }
+            /* Make badges smaller on mobile */
+            .kpi-card .badge, .apertura-item-card .badge {
+                padding: .35rem .6rem; font-size: .85rem;
+            }
+            .kpi-icon { width: 44px; height: 44px; font-size: 1.1rem; border-radius: 10px; }
+        }
+
+        /* Extra small screens tweaks */
+        @media (max-width: 576px) {
+            .apertura-item-card::before { left: 10px; width: 5px; top: 10px; bottom: 10px; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+            .apertura-item-card { padding-left: 1.5rem; }
+            .kpi-card { padding: 14px; }
+            .kpi-card .badge { font-size: .8rem; padding: .3rem .5rem; }
+            /* Make total / ganancia more prominent on small screens */
+            .ap-col-total { font-size: 1.8rem; font-weight: 800; color: var(--primary-blue); }
+        }

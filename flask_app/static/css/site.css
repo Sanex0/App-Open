@@ -1,25 +1,31 @@
 /* Shared site styles (moved from caja.html) */
 
+:root{
+    --primary-blue: #006bc2;
+    --secondary-blue: #005da6;
+    --primary-blue-gradient: linear-gradient(160deg, #006bc2 0%, #005da6 100%);
+}
+
 body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
-.main-card { background: white; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,91,168,0.08); overflow: hidden; max-width: 1200px; margin: 30px auto; }
-.card-header-custom { background-color: #005ba8; padding: 28px 20px; text-align: center; color: white; box-shadow: 0 15px 40px #006bc256;}
+.main-card { background: white; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,93,166,0.08); overflow: hidden; max-width: 1200px; margin: 30px auto; }
+.card-header-custom { background: var(--primary-blue-gradient); padding: 28px 20px; text-align: center; color: white; box-shadow: 0 15px 40px rgba(0,107,194,0.12);}
 .header-title{ font-weight:600; font-size:1.4rem; margin:0 }
 .card-body-custom{ padding: 22px; }
 
 .product-grid .product-card{ background:#fff; border-radius:12px; padding:12px; box-shadow: 0 8px 30px rgba(6,22,39,0.07); display:flex; flex-direction:column; height:100%; transition: transform .18s ease, box-shadow .18s ease; }
 .product-item{ display:flex; }
-.card-img-placeholder{ height:80px; display:flex; align-items:center; justify-content:center; font-size:28px; color:#0d6efd; }
+.card-img-placeholder{ height:80px; display:flex; align-items:center; justify-content:center; font-size:28px; color:var(--primary-blue); }
 .product-name{ font-weight:600; margin-bottom:6px; font-size:0.95rem; color:#212529 }
-.product-price{ color:#005ba8; font-weight:700; margin-bottom:8px }
+.product-price{ color:var(--primary-blue); font-weight:700; margin-bottom:8px }
 .qty-control{ display:flex; align-items:center; gap:8px }
 .btn-qty{ width:36px; height:36px; border-radius:8px; border:1px solid #e9ecef; background:#f8f9fa }
 .qty-value{ min-width:26px; text-align:center; display:inline-block }
 
 .product-card.selected{ 
-    border:2px solid rgba(0,91,168,0.22);
+    border:2px solid rgba(0,93,166,0.22);
     box-shadow: 0 24px 60px rgba(6,22,39,0.18);
     transform: translateY(-6px) scale(1.02);
-    background: linear-gradient(180deg, rgba(0,91,168,0.03), #ffffff);
+    background: linear-gradient(180deg, rgba(0,93,166,0.03), #ffffff);
 }
 
 .product-card.selected .product-name{ color:#003a6b; }
@@ -45,8 +51,8 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 }
 #searchInput:focus{
     outline: none;
-    border-color: rgba(0,91,168,0.18);
-    box-shadow: 0 12px 40px rgba(0,91,168,0.12);
+    border-color: rgba(0,93,166,0.18);
+    box-shadow: 0 12px 40px rgba(0,93,166,0.12);
     transform: translateY(-1px);
 }
 #searchInput::placeholder{ color: #9aa6b2; }
@@ -130,12 +136,374 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
     background: linear-gradient(180deg, #ffffff, #f1f5fb);
     border-color: rgba(13,110,253,0.18);
     color: #0b5ed7;
-    box-shadow: 0 10px 30px rgba(0,91,168,0.08);
+    box-shadow: 0 10px 30px rgba(0,93,166,0.08);
     text-decoration: none;
 }
 
 /* Variante sutil para el icono dentro del botón, mantiene contraste en estados inactivos */
 .main-card .btn-outline-secondary.rounded-pill .bi{ transition: color .12s ease, transform .12s ease; }
 .main-card .btn-outline-secondary.rounded-pill:hover .bi{ transform: translateY(-1px); color: #0b5ed7; }
+
+/* Header buttons: usar misma tipografía (Poppins) y colores más ricos y consistentes */
+.card-header-custom .btn{
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+}
+
+/* Botón primario redondeado (header) */
+.main-card .btn-primary.rounded-pill{
+    background: linear-gradient(180deg,#0069d9,#005ba8);
+    border: 1px solid rgba(0,93,166,0.12);
+    box-shadow: 0 10px 28px rgba(3,54,95,0.12);
+    color: #fff;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.main-card .btn-primary.rounded-pill .bi{ margin-right:6px; }
+.main-card .btn-primary.rounded-pill:hover,
+.main-card .btn-primary.rounded-pill:focus{
+    transform: translateY(-3px);
+    filter: brightness(1.03);
+    box-shadow: 0 18px 46px rgba(3,54,95,0.18);
+}
+
+/* Botón secundario (outline) en header: tono frío, texto más oscuro para mejor legibilidad */
+.main-card .btn-outline-secondary.rounded-pill{
+    border-color: rgba(3,54,95,0.06);
+    color: #08324a;
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(246,251,255,0.9));
+    box-shadow: 0 6px 18px rgba(6,22,39,0.04);
+}
+.main-card .btn-outline-secondary.rounded-pill .bi{ color:#0d6efd }
+.main-card .btn-outline-secondary.rounded-pill:hover{
+    border-color: rgba(3,54,95,0.14);
+    color:#053047;
+    box-shadow: 0 12px 30px rgba(3,54,95,0.08);
+}
+
+/* Aplicar diseño consistente a TODOS los botones */
+.btn{
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+}
+
+/* Botones primarios globales */
+.btn-primary{
+    background: linear-gradient(180deg,#0069d9,#005ba8);
+    border: 1px solid rgba(0,91,168,0.12);
+    box-shadow: 0 8px 24px rgba(3,54,95,0.10);
+    color: #fff;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+.btn-primary .bi{ margin-right:6px }
+.btn-primary:hover, .btn-primary:focus{
+    transform: translateY(-3px);
+    filter: brightness(1.03);
+    box-shadow: 0 16px 46px rgba(3,54,95,0.16);
+}
+
+/* Botones secundarios outline globales */
+.btn-outline-secondary{
+    border-color: rgba(3,54,95,0.06);
+    color: #08324a;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(246,251,255,0.95));
+    box-shadow: 0 6px 18px rgba(6,22,39,0.04);
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, color .12s ease;
+}
+.btn-outline-secondary:hover, .btn-outline-secondary:focus{
+    border-color: rgba(3,54,95,0.14);
+    color: #053047;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(3,54,95,0.08);
+}
+
+/* Mantener accesibilidad: foco visible */
+.btn:focus{
+    outline: 3px solid rgba(0,93,166,0.12);
+    outline-offset: 2px;
+}
+
+/* Estilos específicos para la lista de 'Aperturas' (tarjetas) */
+.aperturas-list{ display:flex; flex-direction:column; gap:12px }
+.aperturas-list .product-item{ width:100%; }
+.aperturas-list .product-card{
+    padding:14px; border-radius:14px; background: linear-gradient(180deg,#ffffff,#f6fbff);
+    box-shadow: 0 12px 40px rgba(0,93,166,0.06);
+    transition: transform .14s ease, box-shadow .14s ease, background .12s ease;
+    display:flex; flex-direction:row; align-items:center; gap:14px;
+}
+.aperturas-list .product-card .card-content{ padding-left:12px; display:flex; flex-direction:column; width:100% }
+.aperturas-list .card-img-placeholder{ flex:0 0 84px; width:84px; height:84px; border-radius:10px; background:linear-gradient(135deg,#eaf4ff,#ffffff); color:var(--primary-blue); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow: 0 6px 18px rgba(0,93,166,0.06); }
+.aperturas-list .product-name{ font-size:1rem; color:#063856; font-weight:700 }
+.aperturas-list .product-price.small.text-muted{ color:#6c757d }
+.aperturas-list .fw-bold{ color:var(--primary-blue); font-size:1rem }
+.aperturas-list .badges-container{ margin-bottom:8px }
+.aperturas-list .product-card:hover{ transform: translateY(-6px); box-shadow: 0 24px 80px rgba(0,93,166,0.12); }
+
+/* Desktop: organizar en columnas y tarjetas más altas */
+@media (min-width:768px){
+    .aperturas-list{ display:flex; flex-wrap:wrap; gap:18px }
+    .aperturas-list .product-item{ flex: 1 1 calc(33.333% - 18px); }
+    .aperturas-list .product-card{ flex-direction:column; align-items:flex-start; min-height:160px; }
+    .aperturas-list .card-img-placeholder{ width:100%; height:100px; font-size:28px; border-radius:12px }
+    .aperturas-list .product-card .card-content{ padding-left:0 }
+}
+
+/* Móvil: reducir tamaño y mantener buen espaciado */
+@media (max-width:767px){
+    .aperturas-list .product-card{ padding:12px; gap:10px }
+    .aperturas-list .card-img-placeholder{ width:64px; height:64px; font-size:20px }
+    .aperturas-list .product-name{ font-size:0.98rem }
+}
+
+/* Corregir problemas de overflow y permitir que el contenido interno se reduzca en pantallas pequeñas */
+.aperturas-list,
+.aperturas-list .product-item,
+.aperturas-list .product-card{
+    box-sizing: border-box;
+    max-width: 100%;
+}
+.aperturas-list .product-card{
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    overflow: hidden;
+}
+.aperturas-list .card-content{ flex: 1 1 auto; min-width: 0; }
+.aperturas-list .product-name{ word-break: break-word; -webkit-line-clamp:2; }
+.aperturas-list .card-img-placeholder{ flex: 0 0 auto; }
+
+/* Asegurar que botones y etiquetas no expandan la tarjeta */
+.aperturas-list .d-flex .btn{ white-space: nowrap; }
+.aperturas-list .badges-container{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+
+/* Si por alguna razón existe un contenido muy largo, evitar barra horizontal */
+body{ overflow-x: hidden; }
+
+/* Ajustes finos para pantallas muy pequeñas (320px) */
+@media (max-width:320px){
+    .main-card{ margin:8px; border-radius:10px; }
+    .card-header-custom{ padding:16px 12px; }
+    .card-body-custom{ padding:12px; }
+
+    /* Aperturas list compacta */
+    .aperturas-list{ gap:10px }
+    .aperturas-list .product-card{ padding:10px; gap:8px; min-height:92px; }
+    .aperturas-list .card-img-placeholder{ width:56px; height:56px; font-size:18px; flex:0 0 56px; border-radius:8px }
+    .aperturas-list .card-img-placeholder i{ font-size:18px }
+    .aperturas-list .product-name{ font-size:0.92rem; line-height:1.1; }
+    .aperturas-list .product-price.small.text-muted{ font-size:0.78rem }
+    .aperturas-list .fw-bold{ font-size:0.95rem }
+    .aperturas-list .d-flex .btn{ padding:6px 8px; font-size:0.82rem }
+
+    /* Forzar que las tarjetas ocupen todo el ancho y el contenido pueda reducirse */
+    .aperturas-list,
+    .aperturas-list .product-item,
+    .aperturas-list .product-card{ box-sizing:border-box; max-width:100%; width:100% !important; flex:0 0 100% !important; overflow:hidden }
+    .aperturas-list .card-content{ flex:1 1 auto; min-width:0 }
+    .aperturas-list .product-name{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
+
+    /* Ajustes generales en caja view (productos) */
+    .product-grid .product-card{ min-height:100px }
+    .product-grid .product-card .card-content{ min-width:0 }
+    .card-img-placeholder{ flex:0 0 auto }
+
+    /* Buscar input y total-bar compactos */
+    #searchInput{ padding-top:10px; padding-bottom:10px; font-size:0.95rem }
+    .total-bar{ padding:10px; }
+    body{ padding-bottom:140px }
+}
+
+/* Ajustes adicionales para móviles muy pequeños: reordenar card a columna y hacer botones full-width */
+@media (max-width:480px){
+    .aperturas-list .product-card{
+        display:flex;
+        flex-direction:column;
+        align-items:stretch;
+        padding:12px;
+        gap:10px;
+        min-height:120px;
+    }
+    /* Reordenar elementos: badges arriba, imagen centrada, contenido, precio, acciones */
+    .aperturas-list .badges-container{ order: 0; align-self:flex-start }
+    .aperturas-list .card-img-placeholder{ order: 1; margin:6px auto; width:72px; height:72px; flex:0 0 72px }
+    .aperturas-list .card-content{ order: 2; padding-left:0 }
+    .aperturas-list .card-content > div:first-child{ order:2 }
+    .aperturas-list .card-content .fw-bold{ order:3; text-align:center; margin-top:6px }
+    .aperturas-list .card-content > .mt-2.d-flex{ order:4; margin-top:8px; width:100%; display:flex; flex-direction:column; gap:8px; align-items:center }
+
+    /* Botones full-width y stack en móvil pequeño */
+    .aperturas-list .card-content .d-flex .btn{
+        width:100%;
+        display:block;
+        padding:10px 12px;
+        box-shadow: 0 10px 28px rgba(2,37,87,0.14);
+    }
+    .aperturas-list .card-content .d-flex.gap-2{ gap:8px; }
+
+    /* Ajustes tipográficos para que no rompan el layout */
+    .aperturas-list .product-name{ font-size:0.96rem; text-align:left }
+    .aperturas-list .product-price.small.text-muted{ text-align:left }
+}
+
+/* Fix definitivo para evitar overflow horizontal y asegurar ancho real en móviles */
+@media (max-width:767px){
+    /* dar padding controlado al contenedor para que cards no se salgan */
+    .aperturas-list{ padding: 0 12px; }
+    .aperturas-list .product-item{ width:100%; box-sizing:border-box; }
+    .aperturas-list .product-card{
+        width:100% !important;
+        max-width:100% !important;
+        box-sizing:border-box !important;
+        margin: 0 0 12px 0 !important;
+        overflow: hidden !important;
+        padding-left:12px !important;
+        padding-right:12px !important;
+    }
+    /* asegurar que elementos internos no forcen ancho */
+    .aperturas-list .card-content,
+    .aperturas-list .card-img-placeholder,
+    .aperturas-list .product-name,
+    .aperturas-list .product-price{ max-width:100%; box-sizing:border-box }
+    .aperturas-list .card-img-placeholder{ margin:0 auto 8px auto; }
+    /* evitar que iconos o botones se desborden */
+    .aperturas-list .d-flex .btn{ max-width:100%; box-sizing:border-box }
+}
+
+/* Móvil: asegurar que las acciones queden en el pie de la tarjeta y aumentar sombras */
+@media (max-width:767px){
+    .aperturas-list .product-card{ align-items:stretch; display:flex; flex-direction:row; }
+    .aperturas-list .product-card .card-content{ display:flex; flex-direction:column; }
+    /* El contenedor de acciones (el div con .mt-2.d-flex) se empuja abajo */
+    .aperturas-list .product-card .card-content > .mt-2{ margin-top:auto; }
+
+    /* Aumentar sombra y borde para distinguir cada tarjeta en móvil */
+    .aperturas-list .product-card{
+        box-shadow: 0 20px 60px rgba(3,54,95,0.10);
+        border: 1px solid rgba(3,54,95,0.04);
+        background: linear-gradient(180deg,#ffffff,#f7fbff);
+    }
+
+    /* Sombra y elevación para los botones de acción dentro de cada tarjeta */
+    .aperturas-list .product-card .d-flex .btn{
+        box-shadow: 0 8px 20px rgba(2,37,87,0.16);
+        border-radius: 8px;
+    }
+
+    /* Si hay varios botones, separarlos y que no rompan la línea */
+    .aperturas-list .product-card .d-flex.gap-2{ gap:8px; flex-wrap:wrap }
+}
+
+/* Alineación centrada de acciones en el pie de la tarjeta (móvil) */
+@media (max-width:767px){
+    .aperturas-list .product-card .card-content > .mt-2.d-flex{
+        margin-top:auto;
+        width:100%;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+        padding-top:6px;
+    }
+    /* Centrar el total y ajustar su espaciado */
+    .aperturas-list .product-card .card-content > .mt-2 .fw-bold{
+        text-align:center;
+        width:100%;
+        color:#005ba8;
+    }
+    /* Botón primario dentro de la tarjeta: tamaño y anchura adecuada */
+    .aperturas-list .product-card .d-flex .btn.btn-primary{
+        min-width:88px;
+        padding:8px 12px;
+    }
+    /* Permitir que varios botones se muestren centrados y envueltos si es necesario */
+    .aperturas-list .product-card .d-flex.gap-2{ justify-content:center; flex-wrap:wrap }
+}
+
+    /* Nueva estructura de tarjeta remodelada (ap-card) - estilos generales */
+    .ap-card{
+        background: linear-gradient(180deg,#ffffff,#f6fbff);
+        border-radius:12px;
+        box-shadow:0 18px 48px rgba(3,54,95,0.08);
+        padding:14px;
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        width:100%;
+        box-sizing:border-box;
+        overflow:hidden;
+        border: 1px solid rgba(3,54,95,0.04);
+        border-left: 6px solid rgba(0,91,168,0.08);
+        transition: box-shadow .18s ease, transform .14s ease, border-color .12s ease;
+    }
+    .ap-card:hover{ transform: translateY(-6px); box-shadow:0 26px 80px rgba(3,54,95,0.12); }
+
+    /* Estado visual: borde lateral distintivo según estado */
+    .ap-card.ap-open{ border-left-color: rgba(25,135,84,0.9); }
+    .ap-card.ap-closed{ border-left-color: rgba(108,117,125,0.9); }
+
+    /* Separación extra entre tarjetas para que no se confundan */
+    .aperturas-list .product-item{ padding:6px 0 }
+    .aperturas-list .ap-card + .ap-card{ margin-top:8px }
+
+    /* Aumentar contraste del footer y botones para que destaquen */
+    .ap-card-footer{ padding-top:6px; border-top:1px dashed rgba(3,54,95,0.03); }
+    .ap-actions .btn{ box-shadow: 0 10px 30px rgba(3,54,95,0.12); }
+    .ap-card-head{ display:flex; justify-content:flex-start }
+    .ap-card-body{ display:flex; gap:12px; align-items:center }
+    .ap-card-media{ flex:0 0 72px; width:72px; height:72px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#eaf4ff,#ffffff); box-shadow:0 8px 20px rgba(3,54,95,0.06); color:#0d6efd }
+    .ap-card-content{ flex:1 1 auto; min-width:0 }
+    .ap-title{ font-weight:700; color:#063856; font-size:1rem; line-height:1.1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+    .ap-meta{ color:#6c757d; font-size:.92rem; margin-top:6px }
+    .ap-card-footer{ display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px }
+    .ap-total{ color:#005ba8; font-weight:700; font-size:1rem }
+
+    @media (max-width:480px){
+        .ap-card{ padding:10px }
+        .ap-card-body{ flex-direction:column; align-items:center; text-align:center }
+        .ap-card-media{ width:64px;height:64px }
+        .ap-card-footer{ flex-direction:column; align-items:center }
+        .ap-actions{ width:100%; display:flex; flex-direction:column; gap:8px }
+        .ap-actions .btn{ width:100%; padding:10px; border-radius:8px }
+        .ap-total{ order:0; margin-bottom:6px }
+    }
+
+    /* Logo en header: estilo propio, tamaño y sombra */
+    .app-logo{
+        width:64px;
+        height:64px;
+        object-fit:cover;
+        border-radius:12px;
+        border: 2px solid rgba(255,255,255,0.9);
+        box-shadow: 0 10px 30px rgba(3,54,95,0.12);
+        background: #fff;
+        padding:6px;
+    }
+
+    /* Efecto de sobresalir (elevación) por estado en las tarjetas de Aperturas */
+    .apertura-item-card.ap-open{
+        transform: translateY(-6px);
+        box-shadow: 0 30px 80px rgba(25,135,84,0.08);
+        border-left: 6px solid rgba(25,135,84,0.95);
+    }
+    .apertura-item-card.ap-closed{
+        transform: translateY(0);
+        box-shadow: 0 10px 30px rgba(108,117,125,0.06);
+        border-left: 6px solid rgba(108,117,125,0.9);
+        opacity: 0.98;
+    }
+
+    /* Acento en badge según estado para mayor legibilidad */
+    .apertura-item-card.ap-open .badge-pill{ background: #e6f4ea; color: #0b5e3a; border: none }
+    .apertura-item-card.ap-closed .badge-pill{ background: #f1f3f5; color: #495057; border: none }
+
+    /* Asegurar que el borde lateral no provoque overflow en móvil */
+    @media (max-width:767px){
+        .apertura-item-card.ap-open, .apertura-item-card.ap-closed{ border-left-width:6px; padding-left: 1rem }
+    }
+
 
 

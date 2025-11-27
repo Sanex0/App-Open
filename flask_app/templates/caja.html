@@ -65,24 +65,31 @@
                             
                             {% for producto in productos %}
                             <div class="col-12 col-sm-6 col-md-4 col-lg-3 product-item" data-name="{{ producto.nombre|lower }} {{ producto.id_producto }}">
-                                
-                                <div class="product-card" id="card_{{ producto.id_producto }}">
-                                    
-                                    <div class="badges-container">
-                                        {% if producto.compuesto == 'S' %}<span class="badge bg-info text-dark badge-custom shadow-sm">Compuesto</span>{% endif %}
-                                        {% if producto.kitvirtual == 'S' %}<span class="badge bg-warning text-dark badge-custom shadow-sm">Virtual</span>{% endif %}
+
+                                <div class="product-card ap-card" id="card_{{ producto.id_producto }}">
+                                    <div class="ap-card-head">
+                                        <div class="badges-container">
+                                            {% if producto.compuesto == 'S' %}<span class="badge bg-info text-dark badge-custom shadow-sm">Compuesto</span>{% endif %}
+                                            {% if producto.kitvirtual == 'S' %}<span class="badge bg-warning text-dark badge-custom shadow-sm">Virtual</span>{% endif %}
+                                        </div>
                                     </div>
 
-                                    <div class="card-img-placeholder"><i class="bi bi-basket3"></i></div>
+                                    <div class="ap-card-body">
+                                        <div class="card-img-placeholder ap-card-media"><i class="bi bi-basket3"></i></div>
+                                        <div class="ap-card-content card-content">
+                                            <div class="product-name" title="{{ producto.nombre }}">{{ producto.nombre }}</div>
+                                            <div class="product-price">${{ "{:,.0f}".format(producto.precio).replace(',', '.') }}</div>
+                                        </div>
+                                    </div>
 
-                                    <div class="card-content">
-                                        <div class="product-name" title="{{ producto.nombre }}">{{ producto.nombre }}</div>
-                                        <div class="product-price">${{ "{:,.0f}".format(producto.precio).replace(',', '.') }}</div>
-                                        
-                                        <div class="qty-control">
-                                            <button type="button" class="btn-qty btn-minus" data-prod="{{ producto.id_producto }}"><i class="bi bi-dash"></i></button>
-                                            <span class="qty-value" id="disp_{{ producto.id_producto }}">{{ producto.cantidad|default(0) }}</span>
-                                            <button type="button" class="btn-qty btn-plus" data-prod="{{ producto.id_producto }}"><i class="bi bi-plus"></i></button>
+                                    <div class="ap-card-footer">
+                                        <div class="ap-total">&nbsp;</div>
+                                        <div class="ap-actions">
+                                            <div class="qty-control d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn-qty btn-minus" data-prod="{{ producto.id_producto }}"><i class="bi bi-dash"></i></button>
+                                                <span class="qty-value mx-2" id="disp_{{ producto.id_producto }}">{{ producto.cantidad|default(0) }}</span>
+                                                <button type="button" class="btn-qty btn-plus" data-prod="{{ producto.id_producto }}"><i class="bi bi-plus"></i></button>
+                                            </div>
                                         </div>
                                     </div>
 
