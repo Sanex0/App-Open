@@ -194,7 +194,14 @@ def listar_aperturas():
         totals_map = {}
 
     most_recent = aperturas[0] if aperturas else None
-    return render_template('aperturas.html', aperturas=aperturas, cajas=cajas, totals_map=totals_map, allowed_cajas=allowed_cajas, most_recent=most_recent)
+    # Si venimos de cerrar una apertura, se guarda en session para mostrar el resumen modal
+    apertura_resumen_id = None
+    try:
+        apertura_resumen_id = session.pop('apertura_resumen_id', None)
+    except Exception:
+        apertura_resumen_id = None
+
+    return render_template('aperturas.html', aperturas=aperturas, cajas=cajas, totals_map=totals_map, allowed_cajas=allowed_cajas, most_recent=most_recent, apertura_resumen_id=apertura_resumen_id)
 
 
 @app.route('/api/caja/<int:id_caja>/productos')
@@ -270,18 +277,35 @@ def apertura_crear():
     except Exception:
         saldo_inicio = 0
 
-    # Verificar que no exista apertura activa para la caja
-    existing = Apertura.get_active_by_caja(id_caja)
+    # Verificar permisos del usuario para la caja solicitada
+    try:
+        permisos = Permiso.get_by_user_id(session['user_id'])
+        allowed_caja_ids = [p.vta_cajas_id_caja for p in permisos]
+    except Exception:
+        allowed_caja_ids = []
+
+    try:
+        id_caja_int = int(id_caja)
+    except Exception:
+        flash('Caja inválida.', 'danger')
+        return redirect(url_for('listar_aperturas'))
+
+    if id_caja_int not in allowed_caja_ids:
+        flash('No tienes permisos para abrir una apertura en esta caja.', 'danger')
+        return redirect(url_for('listar_aperturas'))
+
+    # Verificar que no exista apertura activa para la caja (regla: una apertura por caja)
+    existing = Apertura.get_active_by_caja(id_caja_int)
     if existing:
         flash('Ya existe una apertura activa para esta caja.', 'warning')
-        return redirect(url_for('ver_caja', id_caja=id_caja))
+        return redirect(url_for('listar_aperturas'))
 
-    id_ap = Apertura.open_with_amount(id_caja, session['user_id'], saldo_inicio)
+    id_ap = Apertura.open_with_amount(id_caja_int, session['user_id'], saldo_inicio)
     if id_ap:
         flash(f'Caja abierta (id {id_ap}).', 'success')
     else:
         flash('No se pudo abrir la caja.', 'danger')
-    return redirect(url_for('ver_caja', id_caja=id_caja))
+    return redirect(url_for('listar_aperturas'))
 
 
 @app.route('/apertura/<int:id_apertura>/cerrar', methods=['POST'])
@@ -291,27 +315,49 @@ def apertura_cerrar(id_apertura):
     # Si no se entrega `saldo_cierre`, usamos la suma de ventas como saldo final.
     observaciones = request.form.get('observaciones')
 
-    # calcular totales de ventas para esta apertura
-    total = Apertura.get_totals_for_apertura(id_apertura)
-
-    saldo_cierre_raw = request.form.get('saldo_cierre')
     try:
-        if saldo_cierre_raw is None or str(saldo_cierre_raw).strip() == '':
-            saldo_cierre = total
-        else:
-            saldo_cierre = int(saldo_cierre_raw)
-    except Exception:
-        saldo_cierre = total
+        # calcular totales de ventas para esta apertura
+        total = Apertura.get_totals_for_apertura(id_apertura)
 
-    diferencias = saldo_cierre - total
-    res = Apertura.close_with_summary(id_apertura, saldo_cierre, total, diferencias, observaciones)
-    if res is not False:
-        flash('Caja cerrada correctamente.', 'success')
-        return redirect(url_for('resumen_apertura', id_apertura=id_apertura))
-    else:
-        flash('Error cerrando la caja.', 'danger')
-    # redirigir a la vista de la caja asociada si posible
-    return redirect(request.referrer or url_for('index_html'))
+        saldo_cierre_raw = request.form.get('saldo_cierre')
+        try:
+            if saldo_cierre_raw is None or str(saldo_cierre_raw).strip() == '':
+                saldo_cierre = total
+            else:
+                saldo_cierre = int(saldo_cierre_raw)
+        except Exception:
+            saldo_cierre = total
+
+        diferencias = saldo_cierre - total
+
+        # Intentar cerrar con resumen; capturamos excepciones para mostrar mensajes útiles
+        try:
+            res = Apertura.close_with_summary(id_apertura, saldo_cierre, total, diferencias, observaciones)
+        except Exception as e:
+            # Loggear en debug y notificar al usuario
+            if app.config.get('LOGIN_DEBUG'):
+                print(f"[APERTURA CLOSE ERROR] Error ejecutando close_with_summary for id={id_apertura}: {e}")
+            flash('Error al cerrar la apertura (detalle en logs).', 'danger')
+            return redirect(request.referrer or url_for('listar_aperturas'))
+
+        if res is not False and res is not None:
+            flash('Caja cerrada correctamente.', 'success')
+            # Guardar id para mostrar resumen automáticamente en la lista
+            try:
+                session['apertura_resumen_id'] = id_apertura
+            except Exception:
+                pass
+            return redirect(url_for('listar_aperturas'))
+        else:
+            flash('No se pudo actualizar la apertura. Ver logs.', 'danger')
+            return redirect(request.referrer or url_for('listar_aperturas'))
+
+    except Exception as e:
+        # Error inesperado durante el proceso
+        if app.config.get('LOGIN_DEBUG'):
+            print(f"[APERTURA CLOSE EXCEPTION] id={id_apertura} err={e}")
+        flash(f'Error inesperado al intentar cerrar la apertura: {e}', 'danger')
+        return redirect(request.referrer or url_for('listar_aperturas'))
 
 
 @app.route('/apertura/<int:id_apertura>/resumen')
@@ -328,6 +374,18 @@ def resumen_apertura(id_apertura):
     # preparar contexto
     caja = Caja.get_by_id(ap.id_caja_fk) if hasattr(Caja, 'get_by_id') else None
     return render_template('apertura_resumen.html', apertura=ap, total=total, caja=caja)
+
+
+@app.route('/apertura/<int:id_apertura>/resumen_fragment')
+def resumen_apertura_fragment(id_apertura):
+    if 'user_id' not in session:
+        return ('', 401)
+    ap = Apertura.get_by_id(id_apertura)
+    if not ap:
+        return ('', 404)
+    total = Apertura.get_totals_for_apertura(id_apertura)
+    caja = Caja.get_by_id(ap.id_caja_fk) if hasattr(Caja, 'get_by_id') else None
+    return render_template('apertura_resumen_modal.html', apertura=ap, total=total, caja=caja)
 
 @app.route('/logout')
 def logout():
@@ -419,13 +477,25 @@ def confirmar_pago():
 
     # Lógica de negocio: Registrar Venta en la nueva DB
     try:
-        # 1. Verificar/Crear Apertura de Caja
-        active_apertura = Apertura.get_active_by_user_and_caja(session['user_id'], id_caja)
-        if not active_apertura:
-            # Aquí se podría crear una apertura o denegar la venta.
-            # Por ahora, denegamos la venta para forzar un flujo explícito de apertura.
-            flash('No hay una apertura de caja activa para este usuario. No se puede registrar la venta.', 'danger')
+        # 1. Verificar Apertura: buscamos una apertura activa para la caja.
+        try:
+            id_caja_int = int(id_caja)
+        except Exception:
+            flash('Caja inválida.', 'danger')
             return redirect(url_for('ver_caja', id_caja=int(id_caja)))
+
+        # Verificar que el usuario tenga permiso para operar en esta caja
+        permisos = Permiso.get_by_user_id(session['user_id'])
+        allowed_caja_ids = [p.vta_cajas_id_caja for p in permisos]
+        if id_caja_int not in allowed_caja_ids:
+            flash('No tienes permiso para operar en esa caja.', 'danger')
+            return redirect(url_for('ver_caja', id_caja=id_caja_int))
+
+        # Buscar apertura activa por caja (regla: una apertura por caja)
+        active_apertura = Apertura.get_active_by_caja(id_caja_int)
+        if not active_apertura:
+            flash('No hay una apertura activa para esta caja. Abre una en Gestión de Aperturas.', 'danger')
+            return redirect(url_for('ver_caja', id_caja=id_caja_int))
 
         # 2. Registrar/obtener cliente en MySQL
         cliente_temp = session.get('cliente_temp', {})

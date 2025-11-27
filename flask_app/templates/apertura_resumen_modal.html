@@ -1,0 +1,37 @@
+<div class="modal fade" id="modalResumenApertura" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Resumen Apertura #{{ apertura.id_apertura }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Caja</dt>
+                    <dd class="col-sm-8">{{ caja.detalle_caja if caja else apertura.id_caja_fk }}</dd>
+
+                    <dt class="col-sm-4">Fecha inicio</dt>
+                    <dd class="col-sm-8">{{ apertura.fecha_inicio_apertura | datetimeformat }}</dd>
+
+                    <dt class="col-sm-4">Fecha término</dt>
+                    <dd class="col-sm-8">{{ apertura.fecha_termino_apertura | datetimeformat }}</dd>
+
+                    <dt class="col-sm-4">Total ventas</dt>
+                    <dd class="col-sm-8">${{ "{:,.0f}".format(total).replace(',', '.') }}</dd>
+
+                    <dt class="col-sm-4">Saldo cierre</dt>
+                    <dd class="col-sm-8">{{ apertura.saldo_cierre if apertura.saldo_cierre else '-' }}</dd>
+
+                    <dt class="col-sm-4">Diferencia</dt>
+                    <dd class="col-sm-8">{% if apertura.diferencias %}{{ apertura.diferencias }}{% else %}{{ (apertura.saldo_cierre - total) if apertura.saldo_cierre else 0 }}{% endif %}</dd>
+
+                    <dt class="col-sm-4">Observaciones</dt>
+                    <dd class="col-sm-8">{% if apertura.observaciones %}{{ apertura.observaciones }}{% else %}-{% endif %}</dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <a href="/aperturas" class="btn btn-secondary">Cerrar</a>
+            </div>
+        </div>
+    </div>
+</div>

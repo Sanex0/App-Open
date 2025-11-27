@@ -46,7 +46,11 @@ class Apertura:
 
     @classmethod
     def close_with_summary(cls, id_apertura, saldo_cierre, total_ventas, diferencias, observaciones=None):
-        query = """
+        # Intentar actualizar con todos los campos; si la tabla aún no tiene
+        # las columnas opcionales (saldo_cierre, diferencias, etc.) la consulta
+        # fallará. En ese caso hacemos un fallback que solamente cierra la apertura
+        # (marca estado_apertura = 0 y fecha_termino_apertura).
+        query_full = """
             UPDATE vta_apertura SET estado_apertura = 0, fecha_termino_apertura = %(fecha_termino)s,
             saldo_cierre = %(saldo_cierre)s, total_ventas = %(total_ventas)s, diferencias = %(diferencias)s, observaciones = %(observaciones)s
             WHERE id_apertura = %(id_apertura)s;
@@ -56,7 +60,17 @@ class Apertura:
             'total_ventas': total_ventas, 'diferencias': diferencias,
             'observaciones': observaciones, 'id_apertura': id_apertura
         }
-        return connectToMySQL('sistemas').query_db(query, data)
+        # Ejecutar la consulta completa primero. connectToMySQL.query_db atrapa
+        # excepciones y devuelve False en caso de error, por lo que comprobamos
+        # el resultado en lugar de depender de except.
+        res_full = connectToMySQL('sistemas').query_db(query_full, data)
+        if res_full is not False:
+            return res_full
+
+        # Fallback: realizar una actualización mínima que sólo cierra la apertura
+        fallback = "UPDATE vta_apertura SET estado_apertura = 0, fecha_termino_apertura = %(fecha_termino)s WHERE id_apertura = %(id_apertura)s;"
+        res_fb = connectToMySQL('sistemas').query_db(fallback, {'fecha_termino': datetime.now(), 'id_apertura': id_apertura})
+        return res_fb
 
     @classmethod
     def get_active_by_caja(cls, id_caja):
@@ -95,6 +109,15 @@ class Apertura:
     def get_by_id(cls, id_apertura):
         query = "SELECT * FROM vta_apertura WHERE id_apertura = %(id_apertura)s LIMIT 1;"
         res = connectToMySQL('sistemas').query_db(query, {'id_apertura': id_apertura})
+        if not res:
+            return None
+        return cls(res[0])
+
+    @classmethod
+    def get_active_global(cls):
+        """Devuelve la apertura activa en todo el sistema (si existe)."""
+        query = "SELECT * FROM vta_apertura WHERE estado_apertura = 1 LIMIT 1;"
+        res = connectToMySQL('sistemas').query_db(query)
         if not res:
             return None
         return cls(res[0])
