@@ -146,6 +146,13 @@ def ver_caja(id_caja):
             apertura_totals = Apertura.get_totals_for_apertura(active_apertura.id_apertura)
         except Exception as e:
             apertura_totals = 0
+    # Permisos del usuario sobre cajas (para mostrar mensajes útiles)
+    try:
+        permisos = Permiso.get_by_user_id(session['user_id'])
+        allowed_caja_ids = [p.vta_cajas_id_caja for p in permisos]
+    except Exception:
+        allowed_caja_ids = []
+    can_open_apertura = (id_caja in allowed_caja_ids)
     # Restaurar cantidades previamente seleccionadas (si existen) desde la sesión
     try:
         session_products = session.get('productos_boleta', []) or []
@@ -158,7 +165,7 @@ def ver_caja(id_caja):
         if app.config.get('LOGIN_DEBUG'):
             print(f"[LOGIN DEBUG] Error al restaurar cantidades desde session: {e}")
 
-    return render_template('caja.html', productos=productos, id_caja=id_caja, cajas=cajas, apertura=active_apertura, apertura_totals=apertura_totals)
+    return render_template('caja.html', productos=productos, id_caja=id_caja, cajas=cajas, apertura=active_apertura, apertura_totals=apertura_totals, can_open_apertura=can_open_apertura)
 
 
 @app.route('/aperturas')
@@ -241,7 +248,19 @@ def resumen_pago():
         return redirect(request.referrer)
     
     id_caja = request.form.get('id_caja')
-    productos_en_caja = Producto.get_by_caja(int(id_caja)) if id_caja and id_caja.isdigit() else []
+    # Verificar que la caja tenga una apertura activa antes de procesar el pago
+    try:
+        id_caja_int = int(id_caja)
+    except Exception:
+        flash('Caja inválida.', 'danger')
+        return redirect(url_for('listar_aperturas'))
+
+    active_ap = Apertura.get_active_by_caja(id_caja_int)
+    if not active_ap:
+        flash('No hay una apertura activa para esta caja. Abra una en Gestión de Aperturas antes de procesar pagos.', 'warning')
+        return redirect(url_for('listar_aperturas'))
+
+    productos_en_caja = Producto.get_by_caja(id_caja_int)
     
     productos_a_pagar = []
     total = 0

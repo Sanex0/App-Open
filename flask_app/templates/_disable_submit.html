@@ -1,0 +1,42 @@
+<!-- Include: disable submit buttons and show spinner to prevent double submissions -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    function makeSpinnerHtml(text){
+        var txt = text || 'Enviando...';
+        return '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + txt;
+    }
+
+    var forms = document.querySelectorAll('form.js-disable-on-submit');
+    forms.forEach(function(form){
+        form.addEventListener('submit', function(e){
+            try{
+                    // prevent double-submit for the whole form
+                    if(form.dataset.submitting === '1') { e.preventDefault(); return; }
+                    form.dataset.submitting = '1';
+
+                    var btn = form.querySelector('button[type="submit"], input[type="submit"]');
+                    if(!btn) return;
+                    // store original HTML/text so it can be restored if needed
+                    if(!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+                    var waitText = btn.getAttribute('data-wait-text') || btn.getAttribute('data-wait') || 'Enviando...';
+                    // set fixed width to avoid layout shift
+                    try{ var w = btn.offsetWidth; if(w) btn.style.width = w + 'px'; }catch(e){}
+                    btn.innerHTML = makeSpinnerHtml(waitText);
+                    btn.setAttribute('disabled', 'disabled');
+
+                    // If the form is inside a modal, disable modal close controls to avoid duplicate actions
+                    try{
+                        var modal = form.closest('.modal');
+                        if(modal){
+                            // disable X buttons
+                            var closeBtns = modal.querySelectorAll('.btn-close, [data-bs-dismiss="modal"]');
+                            closeBtns.forEach(function(cb){
+                                try{ cb.setAttribute('disabled', 'disabled'); cb.setAttribute('aria-disabled', 'true'); }catch(e){}
+                            });
+                        }
+                    }catch(e){ /* ignore */ }
+            }catch(err){ console.log('disable-submit err', err); }
+        });
+    });
+});
+</script>

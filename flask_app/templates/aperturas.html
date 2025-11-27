@@ -10,21 +10,7 @@
 </head>
 <body>
 <div class="container py-4">
-    <!-- TOAST DE MENSAJES (mostrar errores/avisos relacionados con aperturas) -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="toast align-items-center text-bg-{{ category if category != 'error' else 'danger' }} border-0 shadow-lg mb-2 fade show" role="alert">
-                        <div class="d-flex">
-                            <div class="toast-body">{{ message|safe }}</div>
-                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
+    {% include '_flash.html' %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>Aperturas</h3>
         <div class="d-flex gap-2">
@@ -48,7 +34,6 @@
                         <th>Fecha Inicio</th>
                         <th>Fecha Término</th>
                         <th>Total Ventas</th>
-                        <th>Saldo Cierre</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -68,7 +53,6 @@
                                 <td>{{ ap.fecha_inicio_apertura | datetimeformat }}</td>
                                 <td>{{ ap.fecha_termino_apertura | datetimeformat }}</td>
                                 <td>${{ "{:,.0f}".format(totals_map.get(ap.id_apertura, 0)).replace(',', '.') }}</td>
-                                <td>{{ ap.saldo_cierre if ap.saldo_cierre else '-' }}</td>
                                 <td>
                                     <div class="d-flex gap-2">
                                         {% if ap.estado_apertura == 1 %}
@@ -82,8 +66,8 @@
                                 </td>
                             </tr>
                         {% endfor %}
-                    {% else %}
-                        <tr><td colspan="8" class="text-center text-muted">No hay aperturas registradas.</td></tr>
+                        {% else %}
+                        <tr><td colspan="7" class="text-center text-muted">No hay aperturas registradas.</td></tr>
                     {% endif %}
                 </tbody>
             </table>
@@ -92,9 +76,9 @@
 </div>
 
 <!-- Modal: Nueva Apertura -->
-<div class="modal fade" id="modalNuevaApertura" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalNuevaApertura" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="post" action="/apertura" class="modal-content">
+    <form method="post" action="/apertura" class="modal-content js-disable-on-submit">
             <div class="modal-header">
                 <h5 class="modal-title">Nueva Apertura</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -111,7 +95,7 @@
                 <div class="form-text">La apertura no requiere monto inicial; se usará la suma de ventas al cierre.</div>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">Abrir</button>
+                <button type="submit" class="btn btn-primary" data-wait-text="Abriendo...">Abrir</button>
             </div>
         </form>
     </div>
@@ -120,9 +104,9 @@
 <!-- Modals de Cierre por fila -->
 {% for ap in aperturas %}
     {% if ap.estado_apertura == 1 %}
-    <div class="modal fade" id="modalCerrar{{ ap.id_apertura }}" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalCerrar{{ ap.id_apertura }}" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
-            <form method="post" action="/apertura/{{ ap.id_apertura }}/cerrar" class="modal-content">
+            <form method="post" action="/apertura/{{ ap.id_apertura }}/cerrar" class="modal-content js-disable-on-submit">
                 <div class="modal-header">
                     <h5 class="modal-title">Cerrar Apertura #{{ ap.id_apertura }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -139,9 +123,9 @@
                         <textarea name="observaciones" class="form-control" rows="2"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-danger">Cerrar Apertura</button>
-                </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger" data-wait-text="Cerrando...">Cerrar Apertura</button>
+                    </div>
             </form>
         </div>
     </div>
@@ -164,8 +148,23 @@
                 select.value = cajaId;
                 // si no se seleccionó porque la opción no está en la lista, no hacer nada
             }
+            // focus en el control principal cuando el modal se muestre
+            setTimeout(function(){
+                try{ if(select) select.focus(); else {
+                    var btn = modalEl.querySelector('button[type="submit"]'); if(btn) btn.focus();
+                } }catch(e){}
+            }, 50);
         });
     })();
+    // Enfocar el primer control disponible cuando cualquier modal se muestra (mejora accesibilidad)
+    document.addEventListener('shown.bs.modal', function(ev){
+        try{
+            var modal = ev.target;
+            if(!modal) return;
+            var toFocus = modal.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]');
+            if(toFocus) { try{ toFocus.focus(); }catch(e){} }
+        }catch(e){console.log('focus modal err', e);} 
+    });
     // Mostrar automáticamente el modal de resumen si el servidor indicó una apertura cerrada
     (function(){
         var resumenId = {{ apertura_resumen_id|tojson }};
@@ -187,5 +186,6 @@
             });
     })();
 </script>
+        {% include '_disable_submit.html' %}
 </body>
 </html>

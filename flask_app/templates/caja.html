@@ -14,21 +14,7 @@
 </head>
 <body>
     
-    <!-- TOAST DE MENSAJES -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="toast align-items-center text-bg-{{ category if category != 'error' else 'danger' }} border-0 shadow-lg mb-2 fade show" role="alert">
-                        <div class="d-flex">
-                            <div class="toast-body">{{ message|safe }}</div>
-                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
+    {% include '_flash.html' %}
 
     <div class="container">
         <div class="main-card">
@@ -48,6 +34,19 @@
                             <div class="badge bg-secondary text-white">Caja cerrada</div>
                         {% endif %}
                     </div>
+                    {% if not apertura %}
+                        <div class="mt-3">
+                            {% if can_open_apertura %}
+                                <div class="alert alert-warning" role="alert">
+                                    La caja está cerrada. Abra una <a href="/aperturas" class="alert-link">apertura</a> para poder vender en esta caja.
+                                </div>
+                            {% else %}
+                                <div class="alert alert-danger" role="alert">
+                                    No tienes permisos para abrir una apertura en esta caja. Contacta al administrador.
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
             </div>
 
             <div class="card-body-custom">
@@ -58,7 +57,7 @@
                         placeholder="Buscar producto..." onkeyup="filtrarProductos()">
                 </div>
 
-                <form method="post" action="/pago" id="formPago">
+                <form method="post" action="/pago" id="formPago" class="js-disable-on-submit">
                     <input type="hidden" name="id_caja" value="{{ id_caja }}">
 
                     <div class="product-grid">
@@ -81,9 +80,9 @@
                                         <div class="product-price">${{ "{:,.0f}".format(producto.precio).replace(',', '.') }}</div>
                                         
                                         <div class="qty-control">
-                                            <button type="button" class="btn-qty btn-minus" onclick="updateQty('{{ producto.id_producto }}', -1)"><i class="bi bi-dash"></i></button>
+                                            <button type="button" class="btn-qty btn-minus" data-prod="{{ producto.id_producto }}"><i class="bi bi-dash"></i></button>
                                             <span class="qty-value" id="disp_{{ producto.id_producto }}">{{ producto.cantidad|default(0) }}</span>
-                                            <button type="button" class="btn-qty btn-plus" onclick="updateQty('{{ producto.id_producto }}', 1)"><i class="bi bi-plus"></i></button>
+                                            <button type="button" class="btn-qty btn-plus" data-prod="{{ producto.id_producto }}"><i class="bi bi-plus"></i></button>
                                         </div>
                                     </div>
 
@@ -109,7 +108,7 @@
                         
                         <div class="d-flex gap-2 align-items-center">
                             <a href="/index.html" class="btn btn-outline-secondary rounded-pill px-3"><i class="bi bi-arrow-left"></i> <span class="d-none d-md-inline ms-1">Volver</span></a>
-                            <button type="submit" id="btnPagar" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm" disabled>Pagar <i class="bi bi-chevron-right ms-1"></i></button>
+                            <button type="submit" id="btnPagar" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm" disabled data-wait-text="Procesando...">Pagar <i class="bi bi-chevron-right ms-1"></i></button>
                         </div>
                     </div>
 
@@ -260,6 +259,34 @@
             });
             recalcTotal();
         });
+
+        // Hacer que updateQty esté disponible globalmente (fallback por si algún entorno no la expone)
+        try{ window.updateQty = updateQty; }catch(e){ /* ignore */ }
+
+        // Delegación de eventos: manejar clicks en botones + / - de manera robusta
+        (function(){
+            var container = document.getElementById('productsContainer');
+            if(!container) return;
+            container.addEventListener('click', function(e){
+                var el = e.target;
+                // subir desde icono <i> hasta el botón
+                while(el && el !== container && !el.classList.contains('btn-qty')) el = el.parentNode;
+                if(!el || el === container) return;
+                if(!el.classList.contains('btn-qty')) return;
+                var prodId = el.getAttribute('data-prod');
+                if(!prodId){
+                    // intentar extraer del id del elemento relacionado
+                    var idAttr = el.id || '';
+                    prodId = idAttr.replace('btn_','');
+                }
+                if(el.classList.contains('btn-plus')){
+                    try{ updateQty(prodId, 1); }catch(err){ console.log('updateQty error', err); }
+                } else if(el.classList.contains('btn-minus')){
+                    try{ updateQty(prodId, -1); }catch(err){ console.log('updateQty error', err); }
+                }
+            });
+        })();
     </script>
+    {% include '_disable_submit.html' %}
 </body>
 </html>
