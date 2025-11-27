@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de Usuario | Club Recrear</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+
+    <style>
+        :root {
+            --primary-blue: #005da6; 
+            --btn-blue: #0072c6;
+            /* CAMBIO: Color de fondo más vibrante para la tarjeta */
+            --card-bg-light: #fefefe; /* Un blanco muy puro */
+            --card-radius: 24px;
+        }
+
+        /* Animación suave de entrada */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            
+            /* MEJORA CLAVE: Degradado sutil para el fondo */
+            background: linear-gradient(135deg, #e0f2f7 0%, #d4e7f0 100%); /* Tonos azul-gris muy claros */
+            color: #333; /* Color de texto por defecto */
+        }
+
+        .main-card {
+            background: var(--card-bg-light); /* Usamos el blanco puro de la tarjeta */
+            width: 100%;
+            max-width: 500px;
+            border-radius: var(--card-radius);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(160deg, #006bc2 0%, #005da6 100%);
+            color: white;
+            padding: 45px 30px;
+            position: relative;
+            border-radius: var(--card-radius) var(--card-radius) 0 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            
+            box-shadow: 0 15px 40px #006bc256;
+        }
+
+        .header-text-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            padding-right: 70px; 
+        }
+
+        .btn-logout {
+            position: absolute;
+            top: 30px; 
+            right: 25px;
+            background: rgba(255, 255, 255, 0.15); 
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 14px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .btn-logout:hover {
+            background: white;
+            color: var(--primary-blue);
+        }
+
+        .user-welcome {
+            font-weight: 700;
+            font-size: 2rem;
+            margin: 0; 
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+
+        .club-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.15); 
+            padding: 6px 14px;
+            border-radius: 50px; 
+            width: fit-content;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .club-badge i { opacity: 0.8; }
+        .club-badge span { font-weight: 500; letter-spacing: 0.5px; }
+
+        .card-body-custom {
+            padding: 35px 25px;
+            background: var(--card-bg-light); /* Aseguramos que el cuerpo use el blanco puro */
+        }
+
+        .section-title {
+            color: #8898aa;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            padding-left: 5px;
+        }
+
+        .action-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            
+            background-color: white;
+            border: 1px solid #e1e8ed; 
+            color: #333;
+            
+            text-decoration: none;
+            padding: 20px;
+            border-radius: 16px;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 6px;
+            background: var(--btn-blue);
+            opacity: 0; 
+            transition: opacity 0.2s;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            border-color: var(--btn-blue);
+            background-color: #fcfdff;
+        }
+        
+        .action-card:hover::before { opacity: 1; } 
+
+        .action-content-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .icon-circle {
+            width: 48px;
+            height: 48px;
+            background-color: #eff6ff;
+            color: var(--btn-blue);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .text-group {
+            text-align: left;
+        }
+
+        .action-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .action-subtitle {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        
+        .chevron-icon {
+            color: #cbd5e0;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+        
+        .action-card:hover .chevron-icon {
+            color: var(--btn-blue);
+            transform: translateX(3px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-card">
+        
+        <div class="dashboard-header">
+            <a href="/logout" class="btn-logout" role="button">
+                <i class="bi bi-box-arrow-right"></i> <span>Salir</span>
+            </a>
+
+            <div class="header-text-group">
+                <h2 class="user-welcome">{{ user.nombre_usuario }}</h2>
+                
+                <div class="club-badge">
+                    <i class="bi bi-buildings-fill"></i>
+                    <span>{{ allowed_cajas[0].detalle_caja if allowed_cajas else 'CDR' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body-custom">
+            
+            <div class="section-title">Cajas Habilitadas</div>
+
+            <div class="action-list">
+                {% if cajas %}
+                    {% for caja in cajas %}
+                        <a href="/caja/{{ caja.id_caja }}" class="action-card" role="button">
+                            
+                            <div class="action-content-wrapper">
+                                <div class="icon-circle">
+                                    <i class="bi bi-shop-window"></i>
+                                </div>
+                                
+                                <div class="text-group">
+                                    <div class="action-title">{{ caja.detalle_caja }}</div>
+                                    <div class="action-subtitle">Toca para abrir</div>
+                                </div>
+                            </div>
+
+                            <i class="bi bi-chevron-right chevron-icon"></i>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <div class="icon-circle mx-auto mb-3" style="background:#f1f1f1; color:#ccc;">
+                            <i class="bi bi-inbox"></i>
+                        </div>
+                        <small>No tienes cajas asignadas.</small>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

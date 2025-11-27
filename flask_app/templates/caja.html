@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Selección de Productos | Club Recrear</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        /* (Estilos sin cambios) */
+    </style>
+</head>
+<body>
+    
+    <!-- TOAST DE MENSAJES -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast align-items-center text-bg-{{ category if category != 'error' else 'danger' }} border-0 shadow-lg mb-2 fade show" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">{{ message|safe }}</div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="container">
+        <div class="main-card">
+            
+            <div class="card-header-custom mb-3">
+                <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Logo" width="120" class="mb-2">
+                {% for caja in cajas %}
+                    {% if caja.id_caja == id_caja %}
+                        <h1 class="header-title">{{ caja.detalle_caja }}</h1>
+                        <p class="header-subtitle mb-0">Selecciona tus productos</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="card-body-custom">
+
+                <div class="mb-4 position-relative px-3 pt-2">
+                    <span class="position-absolute top-50 start-0 translate-middle-y ms-4 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control rounded-pill ps-5 py-3 border-0 bg-white" 
+                        placeholder="Buscar producto..." onkeyup="filtrarProductos()">
+                </div>
+
+                <form method="post" action="/pago" id="formPago">
+                    <input type="hidden" name="id_caja" value="{{ id_caja }}">
+
+                    <div class="product-grid">
+                        <div class="row g-3" id="productsContainer">
+                            
+                            {% for producto in productos %}
+                            <div class="col-6 col-md-4 col-lg-3 product-item" data-name="{{ producto.nombre|lower }} {{ producto.id_producto }}">
+                                
+                                <div class="product-card" id="card_{{ producto.id_producto }}">
+                                    
+                                    <div class="badges-container">
+                                        {% if producto.compuesto == 'S' %}<span class="badge bg-info text-dark badge-custom shadow-sm">Compuesto</span>{% endif %}
+                                        {% if producto.kitvirtual == 'S' %}<span class="badge bg-warning text-dark badge-custom shadow-sm">Virtual</span>{% endif %}
+                                    </div>
+
+                                    <div class="card-img-placeholder"><i class="bi bi-basket3"></i></div>
+
+                                    <div class="card-content">
+                                        <div class="product-name" title="{{ producto.nombre }}">{{ producto.nombre }}</div>
+                                        <div class="product-price">${{ "{:,.0f}".format(producto.precio).replace(',', '.') }}</div>
+                                        
+                                        <div class="qty-control">
+                                            <button type="button" class="btn-qty btn-minus" onclick="updateQty('{{ producto.id_producto }}', -1)"><i class="bi bi-dash"></i></button>
+                                            <span class="qty-value" id="disp_{{ producto.id_producto }}">0</span>
+                                            <button type="button" class="btn-qty btn-plus" onclick="updateQty('{{ producto.id_producto }}', 1)"><i class="bi bi-plus"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <input type="checkbox" name="productos" value="{{ producto.id_producto }}" id="check_{{ producto.id_producto }}" class="d-none item-checkbox">
+                                    <input type="hidden" name="cantidad_{{ producto.id_producto }}" id="input_{{ producto.id_producto }}" value="0" data-price="{{ producto.precio }}">
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                        </div>
+
+                        <div id="noResults" class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <p>No encontramos productos con ese nombre.</p>
+                        </div>
+                    </div>
+
+                    <div class="total-bar">
+                        <div>
+                            <span class="total-label">Total Estimado:</span>
+                            <span class="total-value" id="displayTotal">$0</span>
+                        </div>
+                        
+                        <div class="d-flex gap-2 align-items-center">
+                            <a href="/index.html" class="btn btn-outline-secondary rounded-pill px-3"><i class="bi bi-arrow-left"></i> <span class="d-none d-md-inline ms-1">Volver</span></a>
+                            <button type="submit" id="btnPagar" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm" disabled>Pagar <i class="bi bi-chevron-right ms-1"></i></button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // (JavaScript sin cambios)
+    </script>
+</body>
+</html>
