@@ -32,11 +32,7 @@
           <dt class="col-sm-3">Total ventas</dt>
           <dd class="col-sm-9">${{ "{:,.0f}".format(total).replace(',', '.') }}</dd>
 
-          <dt class="col-sm-3">Saldo cierre</dt>
-          <dd class="col-sm-9">{{ apertura.saldo_cierre if apertura.saldo_cierre else '-' }}</dd>
 
-          <dt class="col-sm-3">Diferencia</dt>
-          <dd class="col-sm-9">{% if apertura.diferencias %}{{ apertura.diferencias }}{% else %}{{ (apertura.saldo_cierre - total) if apertura.saldo_cierre else 0 }}{% endif %}</dd>
 
           <dt class="col-sm-3">Observaciones</dt>
           <dd class="col-sm-9">{% if apertura.observaciones %}{{ apertura.observaciones }}{% else %}-{% endif %}</dd>

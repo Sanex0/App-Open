@@ -115,4 +115,27 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 /* Optional: make product-price slightly separated from name */
 .product-price{ margin-top:6px; font-size:0.98rem }
 
+/* Mejoras visuales para botones secundarios redondeados dentro de la tarjeta principal */
+.main-card .btn-outline-secondary.rounded-pill{
+    border-color: rgba(13,110,253,0.08);
+    color: #495057;
+    background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(250,250,250,0.75));
+    box-shadow: 0 6px 18px rgba(6,22,39,0.04);
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease, color .12s ease;
+}
+.main-card .btn-outline-secondary.rounded-pill .bi{ color: #0d6efd; }
+.main-card .btn-outline-secondary.rounded-pill:hover,
+.main-card .btn-outline-secondary.rounded-pill:focus{
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #ffffff, #f1f5fb);
+    border-color: rgba(13,110,253,0.18);
+    color: #0b5ed7;
+    box-shadow: 0 10px 30px rgba(0,91,168,0.08);
+    text-decoration: none;
+}
+
+/* Variante sutil para el icono dentro del botón, mantiene contraste en estados inactivos */
+.main-card .btn-outline-secondary.rounded-pill .bi{ transition: color .12s ease, transform .12s ease; }
+.main-card .btn-outline-secondary.rounded-pill:hover .bi{ transform: translateY(-1px); color: #0b5ed7; }
+
 

@@ -9,6 +9,13 @@ class Apertura:
         self.fecha_termino_apertura = data['fecha_termino_apertura']
         self.id_caja_fk = data['id_caja_fk']
         self.id_usuario_fk = data['id_usuario_fk']
+        # Campos opcionales que pueden no existir en versiones antiguas de la tabla
+        # (por eso usamos .get para evitar KeyError si la columna falta)
+        self.saldo_inicio = data.get('saldo_inicio') if isinstance(data, dict) else None
+        self.saldo_cierre = data.get('saldo_cierre') if isinstance(data, dict) else None
+        self.total_ventas = data.get('total_ventas') if isinstance(data, dict) else None
+        self.diferencias = data.get('diferencias') if isinstance(data, dict) else None
+        self.observaciones = data.get('observaciones') if isinstance(data, dict) else None
 
     @classmethod
     def create(cls, data):
