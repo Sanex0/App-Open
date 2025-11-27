@@ -4,13 +4,17 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
+CREATE SCHEMA IF NOT EXISTS `sistemas` DEFAULT CHARACTER SET utf8mb4 ;
+USE `sistemas` ;
 
+-- -----------------------------------------------------
+-- Table `sistemas`.`vta_club`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sistemas`.`vta_club` (
   `id_club` INT NOT NULL,
   `nom_club` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`id_club`))
 ENGINE = InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table `sistemas`.`vta_cajas`
@@ -31,20 +35,18 @@ AUTO_INCREMENT = 6
 DEFAULT CHARACTER SET = latin1
 COLLATE = latin1_swedish_ci;
 
-
 -- -----------------------------------------------------
 -- Table `sistemas`.`adrecrear_usuarios`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sistemas`.`adrecrear_usuarios` (
   `id_usuario` INT NOT NULL AUTO_INCREMENT,
-  `email_usuario` VARCHAR(500) CHARACTER SET 'utf8mb3' NULL DEFAULT NULL unique,
-  `nombre_usuario` VARCHAR(300) CHARACTER SET 'utf8mb3' NOT NULL,
-  `clave_usuario` TEXT CHARACTER SET 'utf8mb3' NOT NULL,
+  `email_usuario` VARCHAR(500) CHARACTER SET 'utf8mb4' NULL DEFAULT NULL unique, -- CAMBIADO A utf8mb4
+  `nombre_usuario` VARCHAR(300) CHARACTER SET 'utf8mb4' NOT NULL, -- CAMBIADO A utf8mb4
+  `clave_usuario` TEXT CHARACTER SET 'utf8mb4' NOT NULL, -- CAMBIADO A utf8mb4
   `estado_usuario` TINYINT(1) NOT NULL,
   PRIMARY KEY (`id_usuario`))
 ENGINE = InnoDB
 AUTO_INCREMENT = 40;
-
 
 -- -----------------------------------------------------
 -- Table `sistemas`.`vta_apertura`
@@ -71,6 +73,17 @@ CREATE TABLE IF NOT EXISTS `sistemas`.`vta_apertura` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `sistemas`.`vta_clientes` (MOVIDO ANTES DE VENTAS)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sistemas`.`vta_clientes` (
+  `id_cliente` INT NOT NULL AUTO_INCREMENT,
+  `email_cliente` VARCHAR(100),
+  `nombre_cliente` VARCHAR(10) NOT NULL,
+  `telefono_cliente` VARCHAR(16) NULL,
+  PRIMARY KEY (`id_cliente`),
+  UNIQUE INDEX `email_cliente_UNIQUE` (`email_cliente` ASC))
+ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `sistemas`.`vta_ventas`
@@ -82,19 +95,24 @@ CREATE TABLE IF NOT EXISTS `sistemas`.`vta_ventas` (
   `envio_fx` TINYINT NULL DEFAULT 0,
   `envio_correo` TINYINT NULL DEFAULT 0,
   `id_apertura` INT NOT NULL,
+  `id_cliente_fk` INT NULL, -- NUEVO CAMPO FK
   PRIMARY KEY (`id_ventas`),
   INDEX `fk_vta_ventas_vta_apertura1_idx` (`id_apertura` ASC),
+  INDEX `fk_vta_ventas_vta_clientes1_idx` (`id_cliente_fk` ASC), -- NUEVO INDEX
   CONSTRAINT `fk_vta_ventas_vta_apertura1`
     FOREIGN KEY (`id_apertura`)
     REFERENCES `sistemas`.`vta_apertura` (`id_apertura`)
     ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_vta_ventas_vta_clientes1` -- NUEVA CONSTRAINT
+    FOREIGN KEY (`id_cliente_fk`)
+    REFERENCES `sistemas`.`vta_clientes` (`id_cliente`)
+    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB
-COMMENT = '		';
-
+ENGINE = InnoDB;
 
 -- -----------------------------------------------------
--- Table `sistemas`.`vta_productosporcajas`
+-- Table `sistemas`.`vta_productos`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sistemas`.`vta_productos` (
   `id_prod` INT NOT NULL AUTO_INCREMENT,
@@ -104,7 +122,6 @@ ENGINE = InnoDB
 AUTO_INCREMENT = 11
 DEFAULT CHARACTER SET = latin1
 COLLATE = latin1_swedish_ci;
-
 
 -- -----------------------------------------------------
 -- Table `sistemas`.`vta_detalle_ventas`
@@ -130,7 +147,6 @@ CREATE TABLE IF NOT EXISTS `sistemas`.`vta_detalle_ventas` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
 -- Table `sistemas`.`vta_mediopago`
 -- -----------------------------------------------------
@@ -146,8 +162,6 @@ CREATE TABLE IF NOT EXISTS `sistemas`.`vta_mediopago` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-
-USE `sistemas` ;
 
 -- -----------------------------------------------------
 -- Table `sistemas`.`vta_permiso_usuarios`
@@ -175,10 +189,6 @@ AUTO_INCREMENT = 6
 DEFAULT CHARACTER SET = latin1
 COLLATE = latin1_swedish_ci;
 
-
--- -----------------------------------------------------
--- Table `sistemas`.`vta_catalogo_porcaja`
--- -----------------------------------------------------
 -- -----------------------------------------------------
 -- Table `sistemas`.`vta_catalogo_porcaja`
 -- -----------------------------------------------------
@@ -190,7 +200,7 @@ CREATE TABLE IF NOT EXISTS `sistemas`.`vta_catalogo_porcaja` (
   INDEX `fk_vta_catalogo_productos_idx` (`id_prod` ASC),
   CONSTRAINT `fk_vta_catalogo_productos`
     FOREIGN KEY (`id_prod`)
-    REFERENCES `sistemas`.`vta_productos` (`id_prod`) -- CORREGIDO AQUÍ
+    REFERENCES `sistemas`.`vta_productos` (`id_prod`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_vta_catalogo_cajas`

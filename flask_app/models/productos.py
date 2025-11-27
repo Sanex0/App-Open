@@ -13,8 +13,8 @@ class Producto:
     def get_by_caja(cls, id_caja):
         # 1. Obtener IDs de producto desde MySQL
         mysql_query = """
-            SELECT p.id_prod, p.id_producto
-            FROM vta_productosporcajas p
+            SELECT p.id_prod, p.descripcion_prod
+            FROM vta_productos p
             JOIN vta_catalogo_porcaja cat ON p.id_prod = cat.id_prod
             WHERE cat.id_caja = %(id_caja)s;
         """
@@ -24,8 +24,9 @@ class Producto:
         if not mysql_results:
             return []
 
-        # Extraer los IDs de producto para la consulta a SQL Server
-        product_ids = [row['id_producto'] for row in mysql_results]
+        # Extraer los códigos de producto (campo `descripcion_prod`) para la consulta a SQL Server
+        # Filtrar/limpiar valores nulos
+        product_ids = [row['descripcion_prod'] for row in mysql_results if row.get('descripcion_prod')]
         
         # 2. Obtener detalles de productos desde SQL Server
         # El placeholder "?" es para pyodbc, que es común en conexiones a SQL Server
@@ -56,12 +57,13 @@ class Producto:
         
         final_products = []
         for row in mysql_results:
-            product_detail = productos_dict.get(row['id_producto'])
+            codigo = row.get('descripcion_prod')
+            product_detail = productos_dict.get(codigo)
             if product_detail:
                 # Combinar la información
                 full_product_data = {
-                    'id_prod': row['id_prod'],
-                    'id_producto': row['id_producto'],
+                    'id_prod': row.get('id_prod'),
+                    'id_producto': codigo,
                     **product_detail
                 }
                 final_products.append(cls(full_product_data))

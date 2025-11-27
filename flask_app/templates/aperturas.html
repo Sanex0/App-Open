@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aperturas de Caja</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+</head>
+<body>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Aperturas</h3>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaApertura"><i class="bi bi-plus-lg"></i> Nueva Apertura</button>
+            <a href="/index.html" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <p class="mb-2">Desde aquí puedes ver y gestionar las aperturas de caja de las cajas que administras.</p>
+            {% if most_recent %}
+                <div class="mb-3"><strong>Última apertura emitida:</strong> {{ most_recent.fecha_inicio_apertura | datetimeformat }}</div>
+            {% endif %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Caja</th>
+                        <th>Estado</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Término</th>
+                        <th>Total Ventas</th>
+                        <th>Saldo Cierre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if aperturas %}
+                        {% for ap in aperturas %}
+                            <tr>
+                                <td>{{ ap.id_apertura }}</td>
+                                <td>{{ cajas.get(ap.id_caja_fk).detalle_caja if cajas.get(ap.id_caja_fk) else ap.id_caja_fk }}</td>
+                                <td>
+                                    {% if ap.estado_apertura == 1 %}
+                                        <span class="badge bg-success">Abierta</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Cerrada</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ ap.fecha_inicio_apertura | datetimeformat }}</td>
+                                <td>{{ ap.fecha_termino_apertura | datetimeformat }}</td>
+                                <td>${{ "{:,.0f}".format(totals_map.get(ap.id_apertura, 0)).replace(',', '.') }}</td>
+                                <td>{{ ap.saldo_cierre if ap.saldo_cierre else '-' }}</td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        {% if ap.estado_apertura == 1 %}
+                                            <!-- Botón que abre modal para cerrar -->
+                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#modalCerrar{{ ap.id_apertura }}">Cerrar</button>
+                                            <a href="/caja/{{ ap.id_caja_fk }}" class="btn btn-sm btn-outline-primary">Ir a Caja</a>
+                                        {% else %}
+                                            <form method="post" action="/apertura" class="d-inline">
+                                                <input type="hidden" name="id_caja" value="{{ ap.id_caja_fk }}">
+                                                <button type="submit" class="btn btn-sm btn-primary">Abrir nueva</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="8" class="text-center text-muted">No hay aperturas registradas.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nueva Apertura -->
+<div class="modal fade" id="modalNuevaApertura" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" action="/apertura" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Apertura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Caja</label>
+                    <select name="id_caja" class="form-select" required>
+                        {% for c in allowed_cajas %}
+                            <option value="{{ c.id_caja }}">{{ c.detalle_caja }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-text">La apertura no requiere monto inicial; se usará la suma de ventas al cierre.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Abrir</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modals de Cierre por fila -->
+{% for ap in aperturas %}
+    {% if ap.estado_apertura == 1 %}
+    <div class="modal fade" id="modalCerrar{{ ap.id_apertura }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="post" action="/apertura/{{ ap.id_apertura }}/cerrar" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cerrar Apertura #{{ ap.id_apertura }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2"><strong>Fecha inicio:</strong> {{ ap.fecha_inicio_apertura }}</div>
+                    <div class="mb-2"><strong>Total ventas:</strong> {{ totals_map.get(ap.id_apertura, 0) }}</div>
+                    <div class="mb-3">
+                        <label class="form-label">Saldo contado (opcional)</label>
+                        <input type="number" name="saldo_cierre" class="form-control" min="0" step="1" placeholder="Si queda vacío se usará el total de ventas">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea name="observaciones" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">Cerrar Apertura</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

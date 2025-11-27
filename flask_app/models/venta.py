@@ -13,8 +13,8 @@ class Venta:
     def create(cls, data_venta, items):
         # Crear la venta principal
         query_venta = """
-            INSERT INTO vta_ventas (total_ventas, id_apertura, envio_correo) 
-            VALUES (%(total_ventas)s, %(id_apertura)s, %(envio_correo)s);
+            INSERT INTO vta_ventas (total_ventas, id_apertura, envio_correo, id_cliente_fk) 
+            VALUES (%(total_ventas)s, %(id_apertura)s, %(envio_correo)s, %(id_cliente_fk)s);
         """
         id_venta = connectToMySQL('sistemas').query_db(query_venta, data_venta)
 
@@ -29,9 +29,10 @@ class Venta:
             """
             data_detalle = {
                 'id_venta': id_venta,
-                'id_producto_fk': item['id_prod'],
-                'cantidad': item['cantidad'],
-                'id_listaprecio': 176  # ATENCIÓN: id_listaprecio está hardcodeado
+                'id_producto_fk': item.get('id_prod'),
+                'cantidad': item.get('cantidad', 0),
+                # permitir que el item proporcione id_listaprecio, o usar 176 por defecto
+                'id_listaprecio': item.get('id_listaprecio', 176)
             }
             connectToMySQL('sistemas').query_db(query_detalle, data_detalle)
 

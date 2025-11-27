@@ -14,6 +14,7 @@ from flask_app.models.cajas import Caja
 from flask_app.models.apertura import Apertura
 from flask_app.models.venta import Venta
 from flask_app.models.permiso import Permiso
+from flask_app.config.conexiones import connectToMySQL
 
 bcrypt = Bcrypt(app)
 
@@ -137,7 +138,63 @@ def ver_caja(id_caja):
     
     productos = Producto.get_by_caja(id_caja)
     cajas = Caja.get_all()
-    return render_template('caja.html', productos=productos, id_caja=id_caja, cajas=cajas)
+    # Apertura activa (por caja)
+    active_apertura = Apertura.get_active_by_caja(id_caja)
+    apertura_totals = 0
+    if active_apertura:
+        try:
+            apertura_totals = Apertura.get_totals_for_apertura(active_apertura.id_apertura)
+        except Exception as e:
+            apertura_totals = 0
+    # Restaurar cantidades previamente seleccionadas (si existen) desde la sesión
+    try:
+        session_products = session.get('productos_boleta', []) or []
+        # session_products es una lista de dicts con 'id_producto' y 'cantidad'
+        qty_map = {str(p.get('id_producto')): int(p.get('cantidad', 0)) for p in session_products}
+        for prod in productos:
+            pid = str(getattr(prod, 'id_producto', ''))
+            prod.cantidad = qty_map.get(pid, 0)
+    except Exception as e:
+        if app.config.get('LOGIN_DEBUG'):
+            print(f"[LOGIN DEBUG] Error al restaurar cantidades desde session: {e}")
+
+    return render_template('caja.html', productos=productos, id_caja=id_caja, cajas=cajas, apertura=active_apertura, apertura_totals=apertura_totals)
+
+
+@app.route('/aperturas')
+def listar_aperturas():
+    if 'user_id' not in session:
+        return redirect('/')
+
+    permisos = Permiso.get_by_user_id(session['user_id'])
+    allowed_caja_ids = [p.vta_cajas_id_caja for p in permisos]
+    # obtener aperturas para las cajas permitidas
+    try:
+        aperturas = Apertura.get_all_by_cajas(allowed_caja_ids)
+    except Exception as e:
+        if app.config.get('LOGIN_DEBUG'):
+            print(f"[APERTURAS DEBUG] Error obteniendo aperturas: {e}")
+        aperturas = []
+
+    # obtener información de cajas para mostrar el nombre
+    all_cajas = Caja.get_all()
+    cajas = {c.id_caja: c for c in all_cajas}
+    # cajas permitidas para este usuario
+    allowed_cajas = [c for c in all_cajas if c.id_caja in allowed_caja_ids]
+
+    # calcular totales de ventas por apertura para mostrar en la tabla
+    totals_map = {}
+    try:
+        for ap in aperturas:
+            try:
+                totals_map[ap.id_apertura] = Apertura.get_totals_for_apertura(ap.id_apertura)
+            except Exception:
+                totals_map[ap.id_apertura] = 0
+    except Exception:
+        totals_map = {}
+
+    most_recent = aperturas[0] if aperturas else None
+    return render_template('aperturas.html', aperturas=aperturas, cajas=cajas, totals_map=totals_map, allowed_cajas=allowed_cajas, most_recent=most_recent)
 
 
 @app.route('/api/caja/<int:id_caja>/productos')
@@ -192,13 +249,85 @@ def resumen_pago():
     try:
         session['productos_boleta'] = json.loads(json.dumps(productos_a_pagar, default=decimal_default))
         session['total_boleta'] = total
+        session['last_id_caja'] = id_caja
     except Exception as e:
         print(f"[ERROR] No se pudo guardar en session: {e}")
         flash('Hubo un error al procesar los productos.', 'danger')
         return redirect(request.referrer)
 
-    productos_json = json.dumps(session['productos_boleta'])
-    return render_template('resumen_pago.html', productos=productos_a_pagar, productos_json=productos_json, total=total, id_caja=id_caja)
+    # Guardamos productos y total en sesión (ya están guardados), y redirigimos
+    # sólo con el id_caja para evitar exponer datos sensibles en la URL.
+    return redirect(url_for('datos_cliente', id_caja=id_caja))
+
+
+@app.route('/apertura', methods=['POST'])
+def apertura_crear():
+    if 'user_id' not in session:
+        return redirect('/')
+    id_caja = request.form.get('id_caja') or session.get('last_id_caja')
+    try:
+        saldo_inicio = int(request.form.get('saldo_inicio', 0))
+    except Exception:
+        saldo_inicio = 0
+
+    # Verificar que no exista apertura activa para la caja
+    existing = Apertura.get_active_by_caja(id_caja)
+    if existing:
+        flash('Ya existe una apertura activa para esta caja.', 'warning')
+        return redirect(url_for('ver_caja', id_caja=id_caja))
+
+    id_ap = Apertura.open_with_amount(id_caja, session['user_id'], saldo_inicio)
+    if id_ap:
+        flash(f'Caja abierta (id {id_ap}).', 'success')
+    else:
+        flash('No se pudo abrir la caja.', 'danger')
+    return redirect(url_for('ver_caja', id_caja=id_caja))
+
+
+@app.route('/apertura/<int:id_apertura>/cerrar', methods=['POST'])
+def apertura_cerrar(id_apertura):
+    if 'user_id' not in session:
+        return redirect('/')
+    # Si no se entrega `saldo_cierre`, usamos la suma de ventas como saldo final.
+    observaciones = request.form.get('observaciones')
+
+    # calcular totales de ventas para esta apertura
+    total = Apertura.get_totals_for_apertura(id_apertura)
+
+    saldo_cierre_raw = request.form.get('saldo_cierre')
+    try:
+        if saldo_cierre_raw is None or str(saldo_cierre_raw).strip() == '':
+            saldo_cierre = total
+        else:
+            saldo_cierre = int(saldo_cierre_raw)
+    except Exception:
+        saldo_cierre = total
+
+    diferencias = saldo_cierre - total
+    res = Apertura.close_with_summary(id_apertura, saldo_cierre, total, diferencias, observaciones)
+    if res is not False:
+        flash('Caja cerrada correctamente.', 'success')
+        return redirect(url_for('resumen_apertura', id_apertura=id_apertura))
+    else:
+        flash('Error cerrando la caja.', 'danger')
+    # redirigir a la vista de la caja asociada si posible
+    return redirect(request.referrer or url_for('index_html'))
+
+
+@app.route('/apertura/<int:id_apertura>/resumen')
+def resumen_apertura(id_apertura):
+    if 'user_id' not in session:
+        return redirect('/')
+    ap = Apertura.get_by_id(id_apertura)
+    if not ap:
+        flash('Apertura no encontrada.', 'warning')
+        return redirect(url_for('listar_aperturas'))
+
+    total = Apertura.get_totals_for_apertura(id_apertura)
+
+    # preparar contexto
+    caja = Caja.get_by_id(ap.id_caja_fk) if hasattr(Caja, 'get_by_id') else None
+    return render_template('apertura_resumen.html', apertura=ap, total=total, caja=caja)
 
 @app.route('/logout')
 def logout():
@@ -211,13 +340,39 @@ def datos_cliente():
         return redirect('/')
 
     if request.method == 'POST':
+        # Validar RUT y guardar datos del cliente temporalmente en sesión
         if not validar_rut(request.form.get('rut')):
             flash('RUT inválido. Por favor ingrese un RUT válido.', 'danger')
-            return render_template('form_boleta.html', **request.form)
-        
-        return redirect(url_for('confirmar_pago', **request.form))
-    
-    return render_template('form_boleta.html', **request.args)
+            return render_template('procesamiento_pago.html', **request.form)
+
+        # `correo` puede ser opcional según esquema; no forzamos su presencia aquí
+
+        # Guardar datos del cliente en sesión para usarlos en la confirmación y en el registro final
+        session['cliente_temp'] = {
+            'nombre': request.form.get('nombre'),
+            'rut': request.form.get('rut'),
+            'correo': request.form.get('correo'),
+            'telefono': request.form.get('telefono'),
+            'medio_pago': request.form.get('medio_pago')
+        }
+
+        return redirect(url_for('confirmar_pago'))
+    # Para GET: preferimos tomar la lista de productos y total desde la sesión
+    # (más seguro) si no vienen en los query params.
+    id_caja = request.args.get('id_caja')
+    productos = request.args.get('productos')
+    total = request.args.get('total')
+
+    if not productos:
+        try:
+            productos = json.dumps(session.get('productos_boleta', []))
+        except Exception:
+            productos = '[]'
+
+    if not total:
+        total = session.get('total_boleta', 0)
+
+    return render_template('procesamiento_pago.html', id_caja=id_caja, productos=productos, total=total)
 
 @app.route('/confirmar_pago', methods=['GET', 'POST'])
 def confirmar_pago():
@@ -225,7 +380,31 @@ def confirmar_pago():
         return redirect('/')
 
     if request.method == 'GET':
-        return render_template('confirmar_pago.html', **request.args)
+        # Prefer session values (productos and total) and cliente_temp when available
+        id_caja = request.args.get('id_caja') or session.get('last_id_caja')
+        productos = request.args.get('productos')
+        total = request.args.get('total')
+        cliente = session.get('cliente_temp', {})
+
+        if not productos:
+            try:
+                productos = json.dumps(session.get('productos_boleta', []))
+            except Exception:
+                productos = '[]'
+
+        if not total:
+            total = session.get('total_boleta', 0)
+
+        # Pasar datos a la plantilla de confirmación
+        ctx = {
+            'id_caja': id_caja,
+            'productos': productos,
+            'total': total,
+            'nombre': cliente.get('nombre'),
+            'rut': cliente.get('rut'),
+            'correo': cliente.get('correo')
+        }
+        return render_template('confirmar_pago.html', **ctx)
     
     # --- PROCESO POST ---
     id_caja = request.form.get('id_caja')
@@ -248,25 +427,69 @@ def confirmar_pago():
             flash('No hay una apertura de caja activa para este usuario. No se puede registrar la venta.', 'danger')
             return redirect(url_for('ver_caja', id_caja=int(id_caja)))
 
-        # 2. Crear la Venta
+        # 2. Registrar/obtener cliente en MySQL
+        cliente_temp = session.get('cliente_temp', {})
+        nombre_cli = cliente_temp.get('nombre') or nombre
+        rut_cli = cliente_temp.get('rut')
+        correo_cli = cliente_temp.get('correo') or correo
+        telefono_cli = cliente_temp.get('telefono')
+
+        # Si no se entregó correo, permitimos continuar y registramos cliente con email NULL
+        # (la tabla permite ahora valores nulos en email_cliente)
+
+        # Buscar cliente por correo
+        find_q = "SELECT id_cliente FROM vta_clientes WHERE email_cliente = %(email)s"
+        found = connectToMySQL('sistemas').query_db(find_q, {'email': correo_cli})
+        if found and isinstance(found, list) and len(found) > 0:
+            id_cliente_fk = found[0].get('id_cliente')
+            # Cliente existente
+            try:
+                flash(f'Cliente existente usado (id {id_cliente_fk}).', 'info')
+            except Exception:
+                pass
+        else:
+            ins_q = "INSERT INTO vta_clientes (email_cliente, nombre_cliente, telefono_cliente) VALUES (%(email)s, %(nombre)s, %(telefono)s)"
+            id_cliente_fk = connectToMySQL('sistemas').query_db(ins_q, {'email': correo_cli, 'nombre': nombre_cli or 'Cliente', 'telefono': telefono_cli})
+            # Cliente creado
+            try:
+                if correo_cli:
+                    flash(f'Cliente creado (id {id_cliente_fk}) con correo {correo_cli}.', 'success')
+                else:
+                    flash(f'Cliente creado (id {id_cliente_fk}) sin correo.', 'success')
+            except Exception:
+                pass
+
+        # 3. Crear la Venta (con referencia al cliente)
         data_venta = {
             'total_ventas': total,
             'id_apertura': active_apertura.id_apertura,
-            'envio_correo': 1 if correo else 0
+            'envio_correo': 1 if correo_cli else 0,
+            'id_cliente_fk': id_cliente_fk
         }
+
         id_venta = Venta.create(data_venta, productos_list)
 
         if not id_venta:
             flash('Hubo un error al registrar la venta en la base de datos.', 'danger')
             return redirect(url_for('ver_caja', id_cja=int(id_caja)))
 
+        # 4. Registrar medio de pago en vta_mediopago
+        medio = session.pop('cliente_temp', {}).get('medio_pago') if session.get('cliente_temp') else request.form.get('medio_pago')
+        try:
+            if medio:
+                mp_q = "INSERT INTO vta_mediopago (tipo_pago, id_ventas_fk) VALUES (%(tipo)s, %(id_venta)s)"
+                connectToMySQL('sistemas').query_db(mp_q, {'tipo': medio, 'id_venta': id_venta})
+        except Exception as e:
+            if app.config.get('LOGIN_DEBUG'):
+                print(f"[PAYMENT DEBUG] Error insertando medio de pago: {e}")
+
         flash(f'Venta #{id_venta} registrada con éxito!', 'success')
 
         # 3. Enviar Correo (si aplica)
-        if correo:
+        if correo_cli:
             # (El código para enviar correo se mantiene similar, se puede refactorizar a una función)
             # ... (código de envío de email HTML) ...
-            flash(f'Resumen de compra enviado a {correo}', 'success')
+            flash(f'Resumen de compra enviado a {correo_cli}', 'success')
 
     except Exception as e:
         flash(f'Error inesperado durante el registro de la venta: {e}', 'danger')

@@ -15,3 +15,11 @@ class Caja:
             for row in results:
                 cajas.append(cls(row))
         return cajas
+
+    @classmethod
+    def get_by_id(cls, id_caja):
+        query = "SELECT * FROM vta_cajas WHERE id_caja = %(id_caja)s LIMIT 1;"
+        res = connectToMySQL('sistemas').query_db(query, {'id_caja': id_caja})
+        if not res:
+            return None
+        return cls(res[0])

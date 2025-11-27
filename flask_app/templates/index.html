@@ -95,6 +95,25 @@
             color: var(--primary-blue);
         }
 
+        .btn-aperturas {
+            position: absolute;
+            top: 30px;
+            right: 80px;
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 10px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .btn-aperturas:hover { background: white; color: var(--primary-blue); }
+
         .user-welcome {
             font-weight: 700;
             font-size: 2rem;
@@ -226,6 +245,9 @@
         <div class="dashboard-header">
             <a href="/logout" class="btn-logout" role="button">
                 <i class="bi bi-box-arrow-right"></i> <span>Salir</span>
+            </a>
+            <a href="/aperturas" class="btn-aperturas" role="button" title="Gestionar aperturas">
+                <i class="bi bi-calendar-check"></i>
             </a>
 
             <div class="header-text-group">

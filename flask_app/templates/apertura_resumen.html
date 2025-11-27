@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resumen Apertura</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+</head>
+<body>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Resumen Apertura #{{ apertura.id_apertura }}</h3>
+      <div>
+        <a href="/aperturas" class="btn btn-outline-secondary">Volver</a>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3">Caja</dt>
+          <dd class="col-sm-9">{{ caja.detalle_caja if caja else apertura.id_caja_fk }}</dd>
+
+          <dt class="col-sm-3">Fecha inicio</dt>
+          <dd class="col-sm-9">{{ apertura.fecha_inicio_apertura | datetimeformat }}</dd>
+
+          <dt class="col-sm-3">Fecha término</dt>
+          <dd class="col-sm-9">{{ apertura.fecha_termino_apertura | datetimeformat }}</dd>
+
+          <dt class="col-sm-3">Total ventas</dt>
+          <dd class="col-sm-9">${{ "{:,.0f}".format(total).replace(',', '.') }}</dd>
+
+          <dt class="col-sm-3">Saldo cierre</dt>
+          <dd class="col-sm-9">{{ apertura.saldo_cierre if apertura.saldo_cierre else '-' }}</dd>
+
+          <dt class="col-sm-3">Diferencia</dt>
+          <dd class="col-sm-9">{% if apertura.diferencias %}{{ apertura.diferencias }}{% else %}{{ (apertura.saldo_cierre - total) if apertura.saldo_cierre else 0 }}{% endif %}</dd>
+
+          <dt class="col-sm-3">Observaciones</dt>
+          <dd class="col-sm-9">{% if apertura.observaciones %}{{ apertura.observaciones }}{% else %}-{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <a href="/aperturas" class="btn btn-primary">Volver a Aperturas</a>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
