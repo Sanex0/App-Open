@@ -48,30 +48,6 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="nombre" class="form-label text-muted small text-uppercase fw-bold">Nombre del Cliente</label>
-                                        <div class="input-group rounded-group">
-                                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ej: Juan Pérez" required value="{{ nombre if nombre else '' }}">
-                                            <div class="invalid-feedback">Por favor ingrese el nombre.</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="rut" class="form-label text-muted small text-uppercase fw-bold">RUT</label>
-                                        <div class="input-group rounded-group">
-                                            <span class="input-group-text"><i class="bi bi-card-heading"></i></span>
-                                            <input type="text" class="form-control" id="rut" name="rut" placeholder="Ej: 12345678-9" required value="{{ rut if rut else '' }}">
-                                            <div class="invalid-feedback" id="rut-feedback">Ingrese un RUT válido.</div>
-                                        </div>
-                                        <div class="form-text text-muted small mt-1"><i class="bi bi-info-circle me-1"></i> Sin puntos, con guion y dígito verificador.</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
                                         <label for="correo" class="form-label text-muted small text-uppercase fw-bold">Correo</label>
                                         <div class="input-group rounded-group">
                                             <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
@@ -79,6 +55,19 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="nombre" class="form-label text-muted small text-uppercase fw-bold">Nombre del Cliente</label>
+                                        <div class="input-group rounded-group">
+                                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ej: Juan Pérez" value="{{ nombre if nombre else '' }}">
+                                            <div class="invalid-feedback">Por favor ingrese el nombre.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="telefono" class="form-label text-muted small text-uppercase fw-bold">Teléfono</label>
@@ -93,10 +82,19 @@
                             <div class="mb-3">
                                 <label for="medio_pago" class="form-label text-muted small text-uppercase fw-bold">Medio de Pago</label>
                                 <select class="form-select" id="medio_pago" name="medio_pago" required>
+                                    <option value="debito">Débito</option>
+                                    <option value="credito">Crédito</option>
                                     <option value="efectivo">Efectivo</option>
-                                    <option value="tarjeta">Tarjeta</option>
                                     <option value="transferencia">Transferencia</option>
                                 </select>
+                            </div>
+
+                            <div class="mb-3" id="voucher-group" style="display:none;">
+                                <label for="voucher" class="form-label text-muted small text-uppercase fw-bold">Nº de Voucher</label>
+                                <div class="input-group rounded-group">
+                                    <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                                    <input type="text" inputmode="numeric" pattern="\d*" maxlength="12" class="form-control" id="voucher" name="voucher" placeholder="Ej: 123456" disabled>
+                                </div>
                             </div>
 
                             <div class="alert alert-light border text-center mb-4">
@@ -123,36 +121,51 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // RUT validation (same as before)
-        function validarRut(rut) {
-            if (!rut) return false;
-            var valor = rut.replace(/\./g, '').replace(/-/g, '');
-            if (valor.length < 8) return false;
-            var cuerpo = valor.slice(0, -1);
-            var dv = valor.slice(-1).toUpperCase();
-            if (!/^[0-9]+$/.test(cuerpo)) return false;
-            var suma = 0; var multiplo = 2;
-            for (var i = cuerpo.length - 1; i >= 0; i--) { suma += parseInt(cuerpo.charAt(i)) * multiplo; multiplo = multiplo < 7 ? multiplo + 1 : 2; }
-            var dvEsperado = 11 - (suma % 11);
-            dvEsperado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
-            return dv === dvEsperado;
-        }
-
         (function () {
             'use strict';
             var form = document.getElementById('formProcesamiento');
-            var rutInput = document.getElementById('rut');
             var btn = document.getElementById('btnSubmit');
+            var medioSelect = document.getElementById('medio_pago');
+            var voucherInput = document.getElementById('voucher');
+            var voucherGroup = document.getElementById('voucher-group');
+
+            function updateVoucherVisibility() {
+                var val = medioSelect.value;
+                if (val === 'debito' || val === 'credito' || val === 'transferencia') {
+                    voucherGroup.style.display = '';
+                    voucherInput.disabled = false;
+                    voucherInput.required = true;
+                } else {
+                    voucherGroup.style.display = 'none';
+                    voucherInput.disabled = true;
+                    voucherInput.required = false;
+                    voucherInput.value = '';
+                }
+            }
+
+            // Inicializar visibilidad al cargar
+            if (medioSelect) {
+                medioSelect.addEventListener('change', updateVoucherVisibility);
+                updateVoucherVisibility();
+                // Enforce numeric-only and maxlength at input time
+                voucherInput && voucherInput.addEventListener('input', function (e) {
+                    // remove non-digits
+                    var v = this.value.replace(/\D+/g, '');
+                    // enforce maxlength
+                    if (v.length > 12) v = v.slice(0, 12);
+                    if (this.value !== v) this.value = v;
+                });
+            }
             form.addEventListener('submit', function (event) {
-                var rutValido = validarRut(rutInput.value);
-                if (!form.checkValidity() || !rutValido) {
+                if (!form.checkValidity()) {
                     event.preventDefault(); event.stopPropagation();
-                    if (!rutValido && rutInput.value.trim() !== "") { rutInput.setCustomValidity("RUT Inválido"); document.getElementById('rut-feedback').textContent = 'El RUT ingresado no es válido.'; }
-                    else { rutInput.setCustomValidity(""); }
-                } else { rutInput.setCustomValidity(""); var width = btn.offsetWidth; btn.style.width = width + 'px'; btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`; btn.classList.add('disabled'); }
+                } else {
+                    var width = btn.offsetWidth; btn.style.width = width + 'px';
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+                    btn.classList.add('disabled');
+                }
                 form.classList.add('was-validated');
             }, false);
-            rutInput.addEventListener('input', function() { rutInput.setCustomValidity(""); });
         })();
     </script>
 </body>

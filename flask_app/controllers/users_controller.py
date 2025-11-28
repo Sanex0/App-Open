@@ -4,7 +4,7 @@ from decimal import Decimal
 from email.message import EmailMessage
 from datetime import datetime
 
-from flask import render_template, redirect, request, session, flash, url_for, jsonify
+from flask import render_template, redirect, request, session, flash, url_for, jsonify, Response
 from flask_bcrypt import Bcrypt
 
 from flask_app import app
@@ -44,6 +44,46 @@ def validar_rut(rut):
     else: dv_esperado = str(dv_esperado)
     
     return dv == dv_esperado
+
+
+def send_email(to_address, subject, body, sender=None):
+    """Enviar un email simple usando la configuración en app.config.
+    Lanza excepciones en caso de error para que el llamador las maneje.
+    """
+    mail_server = app.config.get('MAIL_SERVER', 'localhost')
+    mail_port = int(app.config.get('MAIL_PORT', 25) or 25)
+    mail_user = app.config.get('MAIL_USERNAME')
+    mail_pass = app.config.get('MAIL_PASSWORD')
+    mail_use_tls = app.config.get('MAIL_USE_TLS', False)
+    mail_use_ssl = app.config.get('MAIL_USE_SSL', False)
+    sender = sender or app.config.get('MAIL_DEFAULT_SENDER', None)
+    # If we have SMTP credentials, prefer using the authenticated user as sender
+    effective_sender = app.config.get('MAIL_USERNAME') or sender or f'no-reply@{mail_server}'
+
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = effective_sender
+    msg['To'] = to_address
+    msg.set_content(body)
+
+    if app.config.get('LOGIN_DEBUG'):
+        try:
+            print(f"[EMAIL DEBUG] server={mail_server} port={mail_port} use_tls={mail_use_tls} use_ssl={mail_use_ssl} user_set={'yes' if mail_user else 'no'} sender={effective_sender}")
+        except Exception:
+            pass
+
+    if mail_use_ssl:
+        with smtplib.SMTP_SSL(mail_server, mail_port) as server:
+            if mail_user and mail_pass:
+                server.login(mail_user, mail_pass)
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP(mail_server, mail_port) as server:
+            if mail_use_tls:
+                server.starttls()
+            if mail_user and mail_pass:
+                server.login(mail_user, mail_pass)
+            server.send_message(msg)
 
 # --- Rutas ---
 
@@ -452,23 +492,213 @@ def datos_cliente():
         return redirect('/')
 
     if request.method == 'POST':
-        # Validar RUT y guardar datos del cliente temporalmente en sesión
-        if not validar_rut(request.form.get('rut')):
-            flash('RUT inválido. Por favor ingrese un RUT válido.', 'danger')
-            return render_template('procesamiento_pago.html', **request.form)
+        # Validación: si el medio requiere voucher, asegúrese de que esté presente y sea numérico
+        medio = request.form.get('medio_pago') or None
+        voucher = request.form.get('voucher') or None
+        medios_con_voucher = {'debito', 'credito', 'transferencia'}
+        if medio in medios_con_voucher:
+            if not voucher or str(voucher).strip() == '':
+                flash('Debe ingresar el número de voucher para el medio de pago seleccionado.', 'danger')
+                return render_template('procesamiento_pago.html', **request.form)
+            if not str(voucher).strip().isdigit():
+                flash('El número de voucher debe contener sólo dígitos.', 'danger')
+                return render_template('procesamiento_pago.html', **request.form)
+            # Limitar longitud para evitar valores fuera de rango en la BD
+            if len(str(voucher).strip()) > 12:
+                flash('El número de voucher es demasiado largo (máximo 12 dígitos).', 'danger')
+                return render_template('procesamiento_pago.html', **request.form)
 
-        # `correo` puede ser opcional según esquema; no forzamos su presencia aquí
-
-        # Guardar datos del cliente en sesión para usarlos en la confirmación y en el registro final
+        # Guardar datos del cliente temporalmente en sesión. Todos los campos son opcionales.
         session['cliente_temp'] = {
-            'nombre': request.form.get('nombre'),
-            'rut': request.form.get('rut'),
-            'correo': request.form.get('correo'),
-            'telefono': request.form.get('telefono'),
-            'medio_pago': request.form.get('medio_pago')
+            'nombre': request.form.get('nombre') or None,
+            'rut': request.form.get('rut') or None,
+            'correo': request.form.get('correo') or None,
+            'telefono': request.form.get('telefono') or None,
+            'medio_pago': medio,
+            'voucher': voucher
         }
 
-        return redirect(url_for('confirmar_pago'))
+        # En lugar de redirigir a una confirmación intermedia, procesamos la venta
+        # inmediatamente y mostramos el comprobante. Este flujo envía automáticamente
+        # el comprobante por correo si existe `correo_cli`.
+        # Reutilizamos la lógica previamente en /confirmar_pago POST.
+        id_caja = request.form.get('id_caja') or session.get('last_id_caja')
+        total = session.get('total_boleta', 0)
+        correo = request.form.get('correo')
+        nombre = request.form.get('nombre')
+        productos_list = session.get('productos_boleta', [])
+
+        if not productos_list:
+            flash('Error: No se encontraron productos para procesar el pago.', 'warning')
+            return redirect(url_for('ver_caja', id_caja=int(id_caja)))
+
+        try:
+            # 1. Verificar Apertura: buscamos una apertura activa para la caja.
+            try:
+                id_caja_int = int(id_caja)
+            except Exception:
+                flash('Caja inválida.', 'danger')
+                return redirect(url_for('ver_caja', id_caja=int(id_caja)))
+
+            # Verificar que el usuario tenga permiso para operar en esta caja
+            permisos = Permiso.get_by_user_id(session['user_id'])
+            allowed_caja_ids = [p.vta_cajas_id_caja for p in permisos]
+            if id_caja_int not in allowed_caja_ids:
+                flash('No tienes permiso para operar en esa caja.', 'danger')
+                return redirect(url_for('ver_caja', id_caja=id_caja_int))
+
+            # Buscar apertura activa por caja (regla: una apertura por caja)
+            active_apertura = Apertura.get_active_by_caja(id_caja_int)
+            if not active_apertura:
+                flash('No hay una apertura activa para esta caja. Abre una en Gestión de Aperturas.', 'danger')
+                return redirect(url_for('ver_caja', id_caja=id_caja_int))
+
+            # 2. Registrar/obtener cliente en MySQL
+            cliente_temp = session.get('cliente_temp', {})
+            nombre_cli = cliente_temp.get('nombre') or nombre
+            rut_cli = cliente_temp.get('rut')
+            correo_cli = cliente_temp.get('correo') or correo
+            telefono_cli = cliente_temp.get('telefono')
+
+            # Buscar cliente por correo
+            find_q = "SELECT id_cliente FROM vta_clientes WHERE email_cliente = %(email)s"
+            found = connectToMySQL('sistemas').query_db(find_q, {'email': correo_cli})
+            if found and isinstance(found, list) and len(found) > 0:
+                id_cliente_fk = found[0].get('id_cliente')
+                try:
+                    flash(f'Cliente existente usado (id {id_cliente_fk}).', 'info')
+                except Exception:
+                    pass
+            else:
+                ins_q = "INSERT INTO vta_clientes (email_cliente, nombre_cliente, telefono_cliente) VALUES (%(email)s, %(nombre)s, %(telefono)s)"
+                id_cliente_fk = connectToMySQL('sistemas').query_db(ins_q, {'email': correo_cli, 'nombre': nombre_cli or 'Cliente', 'telefono': telefono_cli})
+                try:
+                    if correo_cli:
+                        flash(f'Cliente creado (id {id_cliente_fk}) con correo {correo_cli}.', 'success')
+                    else:
+                        flash(f'Cliente creado (id {id_cliente_fk}) sin correo.', 'success')
+                except Exception:
+                    pass
+
+            # 3. Crear la Venta (con referencia al cliente)
+            data_venta = {
+                'total_ventas': total,
+                'id_apertura': active_apertura.id_apertura,
+                'envio_correo': 1 if correo_cli else 0,
+                'id_cliente_fk': id_cliente_fk
+            }
+
+            id_venta = Venta.create(data_venta, productos_list)
+
+            if not id_venta:
+                flash('Hubo un error al registrar la venta en la base de datos.', 'danger')
+                return redirect(url_for('ver_caja', id_cja=int(id_caja)))
+
+            # 4. Registrar medio de pago en vta_mediopago
+            medio = cliente_temp.get('medio_pago') or request.form.get('medio_pago')
+            voucher_val = cliente_temp.get('voucher') or request.form.get('voucher')
+            try:
+                if medio:
+                    try:
+                        id_voucher_val = int(voucher_val) if voucher_val is not None and str(voucher_val).strip() != '' else 0
+                    except Exception:
+                        id_voucher_val = 0
+
+                    mp_q = "INSERT INTO vta_mediopago (tipo_pago, id_voucher, id_ventas_fk) VALUES (%(tipo)s, %(id_voucher)s, %(id_venta)s)"
+                    connectToMySQL('sistemas').query_db(mp_q, {'tipo': medio, 'id_voucher': id_voucher_val, 'id_venta': id_venta})
+            except Exception as e:
+                if app.config.get('LOGIN_DEBUG'):
+                    print(f"[PAYMENT DEBUG] Error insertando medio de pago: {e}")
+
+            flash(f'Venta #{id_venta} registrada con éxito!', 'success')
+
+            # Enviar Correo automáticamente si existe correo_cli
+            email_sent = False
+            email_error = None
+            if correo_cli:
+                try:
+                    subject = f'Comprobante de Venta #{id_venta}'
+                    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    try:
+                        total_num = int(float(total))
+                    except Exception:
+                        try:
+                            total_num = int(total)
+                        except Exception:
+                            total_num = 0
+
+                    if nombre_cli and str(nombre_cli).strip():
+                        saludo = f"Estimado/a {nombre_cli}"
+                    else:
+                        saludo = "Estimado/a Cliente"
+
+                    body = (
+                        f"{saludo},\n\nGracias por su compra.\n\nResumen:\n"
+                        f"- Nº Venta: {id_venta}\n- Total: ${total_num:,}\n- Fecha: {now}\n\nSaludos,\nClub Recrear"
+                    )
+                    send_email(correo_cli, subject, body)
+                    email_sent = True
+                    flash(f'Resumen de compra enviado a {correo_cli}', 'success')
+                except Exception as e:
+                    email_error = str(e)
+                    if app.config.get('LOGIN_DEBUG'):
+                        print(f"[EMAIL ERROR] Error enviando email a {correo_cli}: {e}")
+                    flash(f'No se pudo enviar el correo a {correo_cli}.', 'warning')
+
+        except Exception as e:
+            flash(f'Error inesperado durante el registro de la venta: {e}', 'danger')
+            print(f"[SALE ERROR] {e}")
+            return redirect(url_for('ver_caja', id_caja=int(id_caja)))
+
+        # Preparar datos para mostrar comprobante en pantalla
+        try:
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                total_num = int(float(total))
+            except Exception:
+                try:
+                    total_num = int(total)
+                except Exception:
+                    total_num = 0
+
+            cliente_info = {
+                'nombre': nombre_cli,
+                'correo': correo_cli,
+                'telefono': telefono_cli
+            }
+
+            comprobante_ctx = {
+                'id_venta': id_venta,
+                'medio_pago': medio,
+                'id_voucher': id_voucher_val if 'id_voucher_val' in locals() else 0,
+                'fecha': now,
+                'total': total_num,
+                'productos': productos_list,
+                'cliente': cliente_info,
+                'email_sent': email_sent,
+                'email_error': email_error
+            }
+        except Exception as e:
+            if app.config.get('LOGIN_DEBUG'):
+                print(f"[COMPROBANTE DEBUG] Error preparando contexto del comprobante: {e}")
+            comprobante_ctx = {
+                'id_venta': id_venta,
+                'medio_pago': medio,
+                'id_voucher': 0,
+                'fecha': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'total': total,
+                'productos': productos_list,
+                'cliente': {'nombre': nombre_cli, 'correo': correo_cli},
+                'email_sent': email_sent,
+                'email_error': email_error
+            }
+
+        # Limpiar sesión después de generar comprobante
+        session.pop('productos_boleta', None)
+        session.pop('total_boleta', None)
+        session.pop('cliente_temp', None)
+
+        return render_template('comprobante.html', **comprobante_ctx)
     # Para GET: preferimos tomar la lista de productos y total desde la sesión
     # (más seguro) si no vienen en los query params.
     id_caja = request.args.get('id_caja')
@@ -486,142 +716,147 @@ def datos_cliente():
 
     return render_template('procesamiento_pago.html', id_caja=id_caja, productos=productos, total=total)
 
-@app.route('/confirmar_pago', methods=['GET', 'POST'])
-def confirmar_pago():
+# La ruta /confirmar_pago fue eliminada: el flujo ahora procesa la venta directamente
+# desde /datos_cliente (POST) y renderiza `comprobante.html`.
+
+
+@app.route('/apertura/<int:id_apertura>/export')
+def export_apertura_xlsx(id_apertura):
+    """Exportar las ventas de una apertura como archivo Excel (.xlsx) con formato.
+    Columnas: FechaHora, NroVenta, MedioPago, Voucher, Total
+    """
     if 'user_id' not in session:
         return redirect('/')
 
-    if request.method == 'GET':
-        # Prefer session values (productos and total) and cliente_temp when available
-        id_caja = request.args.get('id_caja') or session.get('last_id_caja')
-        productos = request.args.get('productos')
-        total = request.args.get('total')
-        cliente = session.get('cliente_temp', {})
+    # Select ventas and payment info. Avoid referencing potentially-missing columns
+    # in SQL (previous COALESCE caused Unknown column errors). We'll determine
+    # the date column in Python from the returned row keys.
+    q = (
+        "SELECT v.*, mp.tipo_pago AS medio_pago, mp.id_voucher AS voucher "
+        "FROM vta_ventas v "
+        "LEFT JOIN vta_mediopago mp ON mp.id_ventas_fk = v.id_ventas "
+        "WHERE v.id_apertura = %(id_apertura)s ORDER BY v.id_ventas ASC;"
+    )
+    rows = connectToMySQL('sistemas').query_db(q, {'id_apertura': id_apertura})
 
-        if not productos:
-            try:
-                productos = json.dumps(session.get('productos_boleta', []))
-            except Exception:
-                productos = '[]'
-
-        if not total:
-            total = session.get('total_boleta', 0)
-
-        # Pasar datos a la plantilla de confirmación
-        ctx = {
-            'id_caja': id_caja,
-            'productos': productos,
-            'total': total,
-            'nombre': cliente.get('nombre'),
-            'rut': cliente.get('rut'),
-            'correo': cliente.get('correo')
-        }
-        return render_template('confirmar_pago.html', **ctx)
-    
-    # --- PROCESO POST ---
-    id_caja = request.form.get('id_caja')
-    total = session.get('total_boleta', 0)
-    correo = request.form.get('correo')
-    nombre = request.form.get('nombre')
-    productos_list = session.get('productos_boleta', [])
-
-    if not productos_list:
-        flash('Error: No se encontraron productos para procesar el pago.', 'warning')
-        return redirect(url_for('ver_caja', id_caja=int(id_caja)))
-
-    # Lógica de negocio: Registrar Venta en la nueva DB
+    # Debug logging to diagnose empty exports. Prints SQL, apertura id and row count.
     try:
-        # 1. Verificar Apertura: buscamos una apertura activa para la caja.
         try:
-            id_caja_int = int(id_caja)
+            cnt = len(rows) if rows is not None else 0
         except Exception:
-            flash('Caja inválida.', 'danger')
-            return redirect(url_for('ver_caja', id_caja=int(id_caja)))
-
-        # Verificar que el usuario tenga permiso para operar en esta caja
-        permisos = Permiso.get_by_user_id(session['user_id'])
-        allowed_caja_ids = [p.vta_cajas_id_caja for p in permisos]
-        if id_caja_int not in allowed_caja_ids:
-            flash('No tienes permiso para operar en esa caja.', 'danger')
-            return redirect(url_for('ver_caja', id_caja=id_caja_int))
-
-        # Buscar apertura activa por caja (regla: una apertura por caja)
-        active_apertura = Apertura.get_active_by_caja(id_caja_int)
-        if not active_apertura:
-            flash('No hay una apertura activa para esta caja. Abre una en Gestión de Aperturas.', 'danger')
-            return redirect(url_for('ver_caja', id_caja=id_caja_int))
-
-        # 2. Registrar/obtener cliente en MySQL
-        cliente_temp = session.get('cliente_temp', {})
-        nombre_cli = cliente_temp.get('nombre') or nombre
-        rut_cli = cliente_temp.get('rut')
-        correo_cli = cliente_temp.get('correo') or correo
-        telefono_cli = cliente_temp.get('telefono')
-
-        # Si no se entregó correo, permitimos continuar y registramos cliente con email NULL
-        # (la tabla permite ahora valores nulos en email_cliente)
-
-        # Buscar cliente por correo
-        find_q = "SELECT id_cliente FROM vta_clientes WHERE email_cliente = %(email)s"
-        found = connectToMySQL('sistemas').query_db(find_q, {'email': correo_cli})
-        if found and isinstance(found, list) and len(found) > 0:
-            id_cliente_fk = found[0].get('id_cliente')
-            # Cliente existente
+            cnt = 'unknown'
+        if app.config.get('LOGIN_DEBUG'):
+            print(f"[EXPORT XLSX DEBUG] id_apertura={id_apertura} rows_returned={cnt}")
             try:
-                flash(f'Cliente existente usado (id {id_cliente_fk}).', 'info')
+                print(f"[EXPORT XLSX DEBUG] sample_rows={rows[:3]}")
             except Exception:
                 pass
         else:
-            ins_q = "INSERT INTO vta_clientes (email_cliente, nombre_cliente, telefono_cliente) VALUES (%(email)s, %(nombre)s, %(telefono)s)"
-            id_cliente_fk = connectToMySQL('sistemas').query_db(ins_q, {'email': correo_cli, 'nombre': nombre_cli or 'Cliente', 'telefono': telefono_cli})
-            # Cliente creado
+            # Lightweight informational print to help the user when they run the server.
+            print(f"[EXPORT XLSX] id_apertura={id_apertura} rows_returned={cnt}")
+    except Exception:
+        pass
+
+    # Obtener la fecha de la apertura para usarla como fallback si la venta no tiene fecha
+    try:
+        apertura_obj = Apertura.get_by_id(id_apertura)
+        apertura_date = getattr(apertura_obj, 'fecha_inicio_apertura', None) if apertura_obj is not None else None
+    except Exception:
+        apertura_date = None
+
+    # Crear workbook en memoria usando openpyxl
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+    except Exception:
+        flash('Dependency missing: openpyxl no está instalado. Instale la dependencia y reinicie.', 'danger')
+        return redirect(url_for('resumen_apertura', id_apertura=id_apertura))
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Arqueo {id_apertura}"
+
+    headers = ['FechaHora', 'NroVenta', 'MedioPago', 'Voucher', 'Total']
+    header_font = Font(bold=True, color='FFFFFFFF')
+    header_fill = PatternFill('solid', fgColor='2E8B57')  # verde
+    header_align = Alignment(horizontal='center', vertical='center')
+    thin = Side(border_style='thin', color='FFAAAAAA')
+    header_border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    for col_idx, h in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = header_border
+
+    # Escribir filas
+    row_num = 2
+    for r in rows or []:
+        # Determine a sensible date field from available columns returned by DB.
+        fecha_val = (
+            r.get('fecha') or r.get('fecha_venta') or r.get('fecha_creacion') or
+            r.get('created_at') or r.get('timestamp') or r.get('fecha_hora') or r.get('fechaVenta')
+        )
+
+        # Si no hay fecha en la venta, usar la fecha de la apertura (requerimiento solicitado)
+        if not fecha_val:
+            fecha_val = apertura_date
+        # Parsear string a datetime si es necesario
+        if isinstance(fecha_val, str) and fecha_val.strip():
             try:
-                if correo_cli:
-                    flash(f'Cliente creado (id {id_cliente_fk}) con correo {correo_cli}.', 'success')
-                else:
-                    flash(f'Cliente creado (id {id_cliente_fk}) sin correo.', 'success')
+                from datetime import datetime as _dt
+                try:
+                    fecha_dt = _dt.fromisoformat(fecha_val)
+                except Exception:
+                    fecha_dt = None
+                if fecha_dt is None:
+                    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%d-%m-%Y %H:%M:%S", "%Y-%m-%d"):
+                        try:
+                            fecha_dt = _dt.strptime(fecha_val, fmt)
+                            break
+                        except Exception:
+                            fecha_dt = None
+                if fecha_dt:
+                    fecha_val = fecha_dt
             except Exception:
                 pass
 
-        # 3. Crear la Venta (con referencia al cliente)
-        data_venta = {
-            'total_ventas': total,
-            'id_apertura': active_apertura.id_apertura,
-            'envio_correo': 1 if correo_cli else 0,
-            'id_cliente_fk': id_cliente_fk
-        }
+        nro = r.get('id_ventas') or r.get('id_venta') or ''
+        medio = r.get('medio_pago') or r.get('tipo_pago') or ''
+        voucher = r.get('voucher') or ''
+        if not voucher or str(voucher).strip() == '0':
+            voucher = ''
+        total = r.get('total_ventas') or r.get('total') or 0
 
-        id_venta = Venta.create(data_venta, productos_list)
+        fcell = ws.cell(row=row_num, column=1, value=fecha_val)
+        ws.cell(row=row_num, column=2, value=nro)
+        ws.cell(row=row_num, column=3, value=medio)
+        ws.cell(row=row_num, column=4, value=voucher)
+        tcell = ws.cell(row=row_num, column=5, value=total)
 
-        if not id_venta:
-            flash('Hubo un error al registrar la venta en la base de datos.', 'danger')
-            return redirect(url_for('ver_caja', id_cja=int(id_caja)))
+        if fcell.value and not isinstance(fcell.value, str):
+            fcell.number_format = 'DD-MM-YYYY HH:MM:SS'
+        tcell.number_format = '#,##0'
+        tcell.alignment = Alignment(horizontal='right')
 
-        # 4. Registrar medio de pago en vta_mediopago
-        medio = session.pop('cliente_temp', {}).get('medio_pago') if session.get('cliente_temp') else request.form.get('medio_pago')
-        try:
-            if medio:
-                mp_q = "INSERT INTO vta_mediopago (tipo_pago, id_ventas_fk) VALUES (%(tipo)s, %(id_venta)s)"
-                connectToMySQL('sistemas').query_db(mp_q, {'tipo': medio, 'id_venta': id_venta})
-        except Exception as e:
-            if app.config.get('LOGIN_DEBUG'):
-                print(f"[PAYMENT DEBUG] Error insertando medio de pago: {e}")
+        row_num += 1
 
-        flash(f'Venta #{id_venta} registrada con éxito!', 'success')
+    # Ajustar anchos y formato final
+    col_widths = [20, 12, 18, 12, 14]
+    for i, w in enumerate(col_widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
 
-        # 3. Enviar Correo (si aplica)
-        if correo_cli:
-            # (El código para enviar correo se mantiene similar, se puede refactorizar a una función)
-            # ... (código de envío de email HTML) ...
-            flash(f'Resumen de compra enviado a {correo_cli}', 'success')
+    ws.auto_filter.ref = f"A1:E{row_num-1}"
+    ws.freeze_panes = 'A2'
 
-    except Exception as e:
-        flash(f'Error inesperado durante el registro de la venta: {e}', 'danger')
-        print(f"[SALE ERROR] {e}")
-        return redirect(url_for('ver_caja', id_caja=int(id_caja)))
+    import io as _io
+    bio = _io.BytesIO()
+    wb.save(bio)
+    bio.seek(0)
 
-    # Limpiar sesión después de una venta exitosa
-    session.pop('productos_boleta', None)
-    session.pop('total_boleta', None)
-
-    return redirect(url_for('ver_caja', id_caja=int(id_caja)))
+    filename = f"arqueo_{id_apertura}.xlsx"
+    resp = Response(bio.read(), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    resp.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return resp

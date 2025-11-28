@@ -116,7 +116,9 @@
                                 Ir a Caja
                             </a>
                         {% else %}
-                            {# Botón 'Abrir nueva' eliminado intencionalmente según solicitud #}
+                            <a href="{{ url_for('export_apertura_xlsx', id_apertura=ap.id_apertura) }}" class="btn btn-sm btn-success rounded-pill px-3 ms-1" target="_blank">
+                                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar Excel
+                            </a>
                         {% endif %}
                     </div>
 

@@ -41,7 +41,8 @@ COLLATE = latin1_swedish_ci;
 CREATE TABLE IF NOT EXISTS `sistemas`.`adrecrear_usuarios` (
   `id_usuario` INT NOT NULL AUTO_INCREMENT,
   `email_usuario` VARCHAR(500) CHARACTER SET 'utf8mb4' NULL DEFAULT NULL unique, -- CAMBIADO A utf8mb4
-  `nombre_usuario` VARCHAR(300) CHARACTER SET 'utf8mb4' NOT NULL, -- CAMBIADO A utf8mb4
+  `nombre_usuario` VARCHAR(300) CHARACTER SET 'utf8mb4' NULL DEFAULT NULL, -- CAMBIADO A utf8mb4
+  `telefono` VARCHAR(20) CHARACTER SET 'utf8mb4' NULL DEFAULT NULL, -- CAMBIADO A utf8mb4  
   `clave_usuario` TEXT CHARACTER SET 'utf8mb4' NOT NULL, -- CAMBIADO A utf8mb4
   `estado_usuario` TINYINT(1) NOT NULL,
   PRIMARY KEY (`id_usuario`))
@@ -153,6 +154,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `sistemas`.`vta_mediopago` (
   `id_mediopago` INT NOT NULL AUTO_INCREMENT,
   `tipo_pago` VARCHAR(30) NOT NULL,
+  `id_voucher` INT(8) NOT NULL,  
   `id_ventas_fk` INT NOT NULL,
   PRIMARY KEY (`id_mediopago`),
   INDEX `fk_vta_mediopago_vta_ventas1_idx` (`id_ventas_fk` ASC),

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Comprobante | Club Recrear</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Comprobante de Venta</h5>
+                        <small>Club Recrear</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-light text-dark">Nº {{ id_venta }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Fecha:</strong>
+                            <div>{{ fecha }}</div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <strong>Total:</strong>
+                            <div class="fs-4 fw-bold">${{ '{:,}'.format(total) }}</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Cliente:</strong>
+                            <div>{{ cliente.nombre or 'Cliente' }}</div>
+                            {% if cliente.correo %}<div class="small">{{ cliente.correo }}</div>{% endif %}
+                        </div>
+                        <div class="col-6 text-end">
+                            <strong>Medio:</strong>
+                            <div>{{ medio_pago or '-' }}</div>
+                            <strong class="d-block mt-1">Voucher:</strong>
+                            <div>{{ id_voucher or '-' }}</div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6>Productos</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Sub</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in productos %}
+                                    <tr>
+                                        <td>{{ p.nombre or p['nombre'] or 'Item' }}</td>
+                                        <td class="text-end">{{ p.cantidad if p.cantidad is not none else p.get('cantidad', 1) }}</td>
+                                        <td class="text-end">${{ '{:,}'.format(p.precio if p.precio is not none else p.get('precio',0)) }}</td>
+                                        <td class="text-end">${{ '{:,}'.format((p.precio if p.precio is not none else p.get('precio',0)) * (p.cantidad if p.cantidad is not none else p.get('cantidad',1))) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <div>
+                            {% if email_sent %}
+                                <div class="text-success">Comprobante enviado por correo.</div>
+                            {% elif email_error %}
+                                <div class="text-warning">No se pudo enviar correo: {{ email_error }}</div>
+                            {% else %}
+                                <div class="text-muted">No se envió correo.</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <a href="{{ url_for('ver_caja', id_caja=session.get('last_id_caja') or 1) }}" class="btn btn-outline-secondary">Volver a Caja</a>
+                            <button onclick="window.print()" class="btn btn-primary ms-2">Imprimir</button>
+                            <a href="data:application/json;charset=utf-8,{{ ( { 'id_venta': id_venta, 'fecha': fecha, 'total': total, 'productos': productos } | tojson ) }}" download="comprobante-{{ id_venta }}.json" class="btn btn-outline-primary ms-2">Exportar JSON</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

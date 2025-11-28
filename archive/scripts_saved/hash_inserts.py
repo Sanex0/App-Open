@@ -6,7 +6,7 @@ from flask_bcrypt import Bcrypt
 
 bcrypt = Bcrypt()
 usuarios = [
-    ('CALC', 'supervisorCALC@recrear.cl', 'CALC', 'supervisor2025', 1, 1),
+    ('ADM', 'ADM@recrear.cl', 'ADM', 'admin0405', 1, 1),
 ]
 
 def _esc(s):

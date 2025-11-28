@@ -13,6 +13,9 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3>Resumen Apertura #{{ apertura.id_apertura }}</h3>
       <div>
+        <a href="{{ url_for('export_apertura_xlsx', id_apertura=apertura.id_apertura) }}" class="btn btn-success me-2" target="_blank">
+          <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar Excel
+        </a>
         <a href="/aperturas" class="btn btn-outline-secondary">Volver</a>
       </div>
     </div>

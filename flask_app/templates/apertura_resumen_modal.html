@@ -28,6 +28,9 @@
                 </dl>
             </div>
             <div class="modal-footer">
+                <a href="{{ url_for('export_apertura_xlsx', id_apertura=apertura.id_apertura) }}" class="btn btn-success me-2" target="_blank">
+                    <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar Excel
+                </a>
                 <a href="/aperturas" class="btn btn-secondary">Cerrar</a>
             </div>
         </div>
