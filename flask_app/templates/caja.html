@@ -12,7 +12,7 @@
 
     <!-- styles moved to static/css/site.css -->
 </head>
-<body>
+<body class="has-total-bar fullscreen-form">
     
     {% include '_flash.html' %}
 
@@ -20,33 +20,51 @@
         <div class="main-card">
             
             <div class="card-header-custom mb-3">
-                <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Logo" width="120" class="mb-2">
-                {% for caja in cajas %}
-                    {% if caja.id_caja == id_caja %}
-                        <h1 class="header-title">{{ caja.detalle_caja }}</h1>
-                        <p class="header-subtitle mb-0">Selecciona tus productos</p>
-                    {% endif %}
-                {% endfor %}
-                    <div class="mt-3 d-flex justify-content-center">
-                        {% if apertura %}
-                            <div class="badge bg-success text-white">Caja abierta (id {{ apertura.id_apertura }})</div>
-                        {% else %}
-                            <div class="badge bg-secondary text-white">Caja cerrada</div>
-                        {% endif %}
+                <div class="header-left">
+                    <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Logo" width="120" class="mb-2 logo-lg">
+                    <div class="header-titles">
+                        {% for caja in cajas %}
+                            {% if caja.id_caja == id_caja %}
+                                <h1 class="header-title">{{ caja.detalle_caja }}</h1>
+                                <p class="header-subtitle mb-0">Selecciona tus productos</p>
+                            {% endif %}
+                        {% endfor %}
                     </div>
-                    {% if not apertura %}
-                        <div class="mt-3">
-                            {% if can_open_apertura %}
-                                <div class="alert alert-warning" role="alert">
-                                    La caja está cerrada. Abra una <a href="/aperturas" class="alert-link">apertura</a> para poder vender en esta caja.
-                                </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="header-badge">
+                            {% if apertura %}
+                                <div class="badge bg-success text-white">Caja abierta</div>
                             {% else %}
-                                <div class="alert alert-danger" role="alert">
-                                    No tienes permisos para abrir una apertura en esta caja. Contacta al administrador.
-                                </div>
+                                <div class="badge bg-secondary text-white">Caja cerrada</div>
                             {% endif %}
                         </div>
-                    {% endif %}
+                        {% if not apertura %}
+                            <div class="header-badge-mobile d-lg-none text-center small text-white px-2 py-1" role="status">
+                                {% if can_open_apertura %}
+                                    Caja cerrada — <a href="/aperturas" class="text-white fw-bold">Abrir apertura</a>
+                                {% else %}
+                                    Caja cerrada — sin permisos para abrir
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {% if not apertura %}
+                            <div class="header-alert ms-2 d-none d-lg-block">
+                                {% if can_open_apertura %}
+                                    <div class="alert alert-warning mb-0" role="alert">
+                                        La caja está cerrada. Abra una <a href="/aperturas" class="alert-link">apertura</a>.
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-danger mb-0" role="alert">
+                                        Sin permisos para abrir una apertura.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
             <div class="card-body-custom">
@@ -86,9 +104,9 @@
                                         <div class="ap-total">&nbsp;</div>
                                         <div class="ap-actions">
                                             <div class="qty-control d-flex align-items-center justify-content-center">
-                                                <button type="button" class="btn-qty btn-minus" data-prod="{{ producto.id_producto }}"><i class="bi bi-dash"></i></button>
+                                                <button type="button" class="btn-qty btn-minus" data-prod="{{ producto.id_producto }}" aria-label="Disminuir cantidad de {{ producto.nombre }}" title="Disminuir"><i class="bi bi-dash"></i></button>
                                                 <span class="qty-value mx-2" id="disp_{{ producto.id_producto }}">{{ producto.cantidad|default(0) }}</span>
-                                                <button type="button" class="btn-qty btn-plus" data-prod="{{ producto.id_producto }}"><i class="bi bi-plus"></i></button>
+                                                <button type="button" class="btn-qty btn-plus" data-prod="{{ producto.id_producto }}" aria-label="Aumentar cantidad de {{ producto.nombre }}" title="Aumentar"><i class="bi bi-plus"></i></button>
                                             </div>
                                         </div>
                                     </div>
@@ -126,6 +144,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Apertura / cierre ahora se gestionan desde la vista de Aperturas (/aperturas) -->
+    {% if not apertura %}
+    <!-- Snackbar para indicar estado de caja cerrada -->
+    <div id="cajaSnackbar" class="snackbar" role="status" aria-live="polite">
+        <div class="snackbar-content">
+            {% if can_open_apertura %}
+                <span>La caja está cerrada. <a href="/aperturas">Abra una apertura</a> para vender.</span>
+            {% else %}
+                <span>No tienes permisos para abrir una apertura. Contacta al administrador.</span>
+            {% endif %}
+            <button type="button" class="snackbar-close" aria-label="Cerrar">×</button>
+        </div>
+    </div>
+    {% endif %}
     <script>
         // Indica si la caja tiene una apertura activa (valor booleano en JS)
         const cajaOpen = {{ 'true' if apertura else 'false' }};
@@ -148,18 +179,7 @@
                 btn.textContent = 'Caja cerrada';
                 btn.title = 'No se puede pagar: la caja está cerrada';
             }
-            // Mostrar indicador adicional en la barra de total
-            const totalBar = document.querySelector('.total-bar');
-            if(totalBar){
-                let note = document.getElementById('cajaClosedNote');
-                if(!note){
-                    note = document.createElement('div');
-                    note.id = 'cajaClosedNote';
-                    note.className = 'text-warning small mt-2';
-                    note.textContent = 'La caja está cerrada. Abra una apertura desde Gestión de Aperturas.';
-                    totalBar.parentNode.insertBefore(note, totalBar.nextSibling);
-                }
-            }
+            // (removed dynamic closed-note insertion)
         }
 
         // Filtra productos por nombre o código
@@ -204,7 +224,28 @@
                 if(qty > 0) card.classList.add('selected'); else card.classList.remove('selected');
             }
 
+            // Animación breve para dar feedback al usuario
+            try{ flashQty(prodId); }catch(e){ /* ignore */ }
+
             recalcTotal();
+        }
+
+        // Micro-animación al cambiar cantidad (usa Web Animations si está disponible)
+        function flashQty(prodId){
+            const disp = document.getElementById('disp_' + prodId);
+            if(!disp) return;
+            try{
+                if(disp.animate){
+                    disp.animate([
+                        { transform: 'scale(1.06)', offset: 0 },
+                        { transform: 'scale(1)', offset: 1 }
+                    ], { duration: 160, easing: 'cubic-bezier(.2,.9,.2,1)' });
+                } else {
+                    // Fallback: togglear clase CSS si necesitas
+                    disp.style.transform = 'scale(1.04)';
+                    setTimeout(()=>{ disp.style.transform = ''; }, 160);
+                }
+            }catch(err){ console.log('flashQty error', err); }
         }
                 // Si la caja está cerrada deshabilitar toda la UI de compras
                 if(!cajaOpen){
@@ -246,6 +287,9 @@
                     btn.disabled = !any;
                 }
             }
+
+            // Actualizar label del botón Pagar (monto y contador)
+            try{ updatePagarLabel(); }catch(e){ /* ignore */ }
         }
 
         // Inicializar valores al cargar la página
@@ -265,7 +309,16 @@
                 if(card){ if(val > 0) card.classList.add('selected'); else card.classList.remove('selected'); }
             });
             recalcTotal();
+            try{ updatePagarLabel(); }catch(e){ /* ignore */ }
         });
+
+        // Ajusta el texto del botón Pagar; dejar solo "Pagar" + icono
+        function updatePagarLabel(){
+            const btn = document.getElementById('btnPagar');
+            if(!btn) return;
+            const arrow = '<i class="bi bi-chevron-right ms-1"></i>';
+            btn.innerHTML = `Pagar ${arrow}`;
+        }
 
         // Hacer que updateQty esté disponible globalmente (fallback por si algún entorno no la expone)
         try{ window.updateQty = updateQty; }catch(e){ /* ignore */ }
@@ -292,6 +345,31 @@
                     try{ updateQty(prodId, -1); }catch(err){ console.log('updateQty error', err); }
                 }
             });
+        })();
+        // Snackbar behavior: show, auto-hide and manual close
+        (function(){
+            const sb = document.getElementById('cajaSnackbar');
+            if(!sb) return;
+            // Apply variant class depending on content (simple heuristic)
+            const txt = sb.textContent || '';
+            if(txt.toLowerCase().indexOf('permiso') !== -1) sb.classList.add('snackbar-danger'); else sb.classList.add('snackbar-warning');
+
+            const headerBadge = document.querySelector('.header-badge .badge');
+            function hideHeaderBadge(){ if(headerBadge) headerBadge.style.display = 'none'; }
+            function showHeaderBadge(){ if(headerBadge) headerBadge.style.display = ''; }
+
+            // Show snackbar and hide header badge
+            setTimeout(()=>{
+                sb.classList.add('show');
+                hideHeaderBadge();
+            }, 80);
+
+            // Auto hide after 6s and restore header badge
+            const hideTimeout = setTimeout(()=>{ sb.classList.remove('show'); showHeaderBadge(); }, 6000);
+
+            // Close button: hide snackbar and restore badge
+            const btn = sb.querySelector('.snackbar-close');
+            if(btn){ btn.addEventListener('click', function(){ sb.classList.remove('show'); clearTimeout(hideTimeout); showHeaderBadge(); }); }
         })();
     </script>
     {% include '_disable_submit.html' %}

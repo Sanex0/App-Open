@@ -1,39 +1,55 @@
 /* Shared site styles (moved from caja.html) */
 
 :root{
-    --primary-blue: #006bc2;
-    --secondary-blue: #005da6;
-    --primary-blue-gradient: linear-gradient(160deg, #006bc2 0%, #005da6 100%);
+    /* Restored original blue palette */
+    --q-primary: #006bc2; /* primary blue */
+    --q-secondary: #005da6; /* darker blue */
+    --q-accent: #0fb8b5;
+    --q-surface: #ffffff;
+    --q-bg: #f4f6f9;
+    --q-text: #063856;
+    --q-muted: #6c757d;
+    --q-success: #2f9e44;
+    --q-danger: #e11d48;
+
+    /* Backwards-compatible names used across the CSS */
+    --primary-blue: var(--q-primary);
+    --secondary-blue: var(--q-secondary);
+    --primary-blue-gradient: linear-gradient(160deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+
+    /* RGB tuple for shadows/overlays (primary blue) */
+    --primary-rgb: 0,107,194;
 }
 
 body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
-.main-card { background: white; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,93,166,0.08); overflow: hidden; max-width: 1200px; margin: 30px auto; }
+.main-card { background: white; border-radius: 18px; box-shadow: 0 10px 30px rgba(var(--primary-rgb),0.08); overflow: hidden; max-width: 1200px; margin: 30px auto; }
 .card-header-custom { background: var(--primary-blue-gradient); padding: 28px 20px; text-align: center; color: white; box-shadow: 0 15px 40px rgba(0,107,194,0.12);}
 .header-title{ font-weight:600; font-size:1.4rem; margin:0 }
 .card-body-custom{ padding: 22px; }
 
-.product-grid .product-card{ background:#fff; border-radius:12px; padding:12px; box-shadow: 0 8px 30px rgba(6,22,39,0.07); display:flex; flex-direction:column; height:100%; transition: transform .18s ease, box-shadow .18s ease; }
+.product-grid .product-card{ background:#fff; border-radius:12px; padding:20px; box-shadow: 0 8px 30px rgba(6,22,39,0.07); display:flex; flex-direction:column; height:100%; transition: transform .18s ease, box-shadow .18s ease; }
 .product-item{ display:flex; }
 .card-img-placeholder{ height:80px; display:flex; align-items:center; justify-content:center; font-size:28px; color:var(--primary-blue); }
 .product-name{ font-weight:600; margin-bottom:6px; font-size:0.95rem; color:#212529 }
 .product-price{ color:var(--primary-blue); font-weight:700; margin-bottom:8px }
-.qty-control{ display:flex; align-items:center; gap:8px }
-.btn-qty{ width:36px; height:36px; border-radius:8px; border:1px solid #e9ecef; background:#f8f9fa }
+.qty-control{ display:flex; align-items:center; gap:12px; justify-content:center }
+.btn-qty{ width:48px; height:48px; border-radius:10px; border:1px solid #e9ecef; background:#f8f9fa; box-shadow: 0 6px 18px rgba(6,22,39,0.08); font-size:1.05rem; }
 .qty-value{ min-width:26px; text-align:center; display:inline-block }
 
-.product-card.selected{ 
-    border:2px solid rgba(0,93,166,0.22);
+product-card.selected{
+    border:2px solid rgba(var(--primary-rgb),0.22);
     box-shadow: 0 24px 60px rgba(6,22,39,0.18);
-    transform: translateY(-6px) scale(1.02);
-    background: linear-gradient(180deg, rgba(0,93,166,0.03), #ffffff);
+    /* No vertical translation or scaling to keep cards aligned in grid */
+    transform: none;
+    background: linear-gradient(180deg, rgba(var(--primary-rgb),0.03), #ffffff);
 }
 
 .product-card.selected .product-name{ color:#003a6b; }
 .product-card.selected .product-price{ color:#003a6b; }
 
-.product-grid .product-card:hover{ transform: translateY(-4px); box-shadow: 0 14px 40px rgba(6,22,39,0.10); }
+.product-grid .product-card:hover{ box-shadow: 0 14px 40px rgba(6,22,39,0.10); }
 
-.btn-qty{ width:36px; height:36px; border-radius:8px; border:1px solid #e9ecef; background:#f8f9fa; box-shadow: 0 2px 8px rgba(6,22,39,0.06); }
+.btn-qty{ width:48px; height:48px; border-radius:10px; border:1px solid #e9ecef; background:#f8f9fa; box-shadow: 0 6px 18px rgba(6,22,39,0.08); font-size:1.05rem; }
 
 .total-bar{ display:flex; justify-content:space-between; align-items:center; padding:18px; border-top:1px solid #f1f3f5; margin-top:18px; box-shadow: 0 8px 30px rgba(6,22,39,0.04); border-radius: 12px; background: #fff; }
 .total-label{ color:#6c757d; font-weight:600 }
@@ -51,8 +67,8 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 }
 #searchInput:focus{
     outline: none;
-    border-color: rgba(0,93,166,0.18);
-    box-shadow: 0 12px 40px rgba(0,93,166,0.12);
+    border-color: rgba(var(--primary-rgb),0.18);
+    box-shadow: 0 12px 40px rgba(var(--primary-rgb),0.12);
     transform: translateY(-1px);
 }
 #searchInput::placeholder{ color: #9aa6b2; }
@@ -63,15 +79,71 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
     .product-grid .product-card{ padding:10px; flex-direction:row; align-items:center }
     .card-img-placeholder{ width:84px; height:84px; font-size:22px; display:flex; align-items:center; justify-content:center }
     .card-content{ flex:1; padding-left:10px }
-    .qty-control{ margin-left:auto }
-    .btn-qty{ width:44px; height:44px }
+    /* Centrar controles de cantidad en móvil en vez de empujar a la derecha */
+    .qty-control{ margin-left:0; justify-content:center }
+    .btn-qty{ width:48px; height:48px }
 
-    /* Barra total fija en móvil */
+    /* Barra total fija en móvil: safe-area y mayor visibilidad */
     .total-bar{
-        position:fixed; bottom:0; left:0; right:0; z-index:1100; background:#fff; padding:12px 16px; box-shadow:0 -6px 20px rgba(0,0,0,0.08); border-top:1px solid #eef2f7; margin:0
+        position:fixed;
+        bottom: env(safe-area-inset-bottom, 0);
+        left:0; right:0;
+        z-index:1200;
+        background: rgba(255,255,255,0.98);
+        padding:16px 18px;
+        box-shadow:0 -12px 30px rgba(3,54,95,0.08);
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+        border-top:1px solid rgba(0,0,0,0.06);
+        margin:0;
+        backdrop-filter: blur(6px);
     }
-    /* Evitar que el contenido quede oculto bajo la barra fija */
-    body { padding-bottom: 110px }
+     /* Evitar que el contenido quede oculto bajo la barra fija (ajustable)
+         Apply padding only when page explicitly opts-in via `.has-total-bar` */
+     .has-total-bar { padding-bottom: 140px }
+
+    /* En móvil ocultar el snackbar para evitar duplicidad con el header-message */
+    .snackbar{ display: none !important }
+
+    /* Centrar el contenido de la barra total en móvil */
+    .total-bar{ justify-content:center; gap:14px; }
+    .total-bar > div:first-child{ text-align:center; display:flex; flex-direction:column; align-items:center }
+    .total-bar .d-flex{ justify-content:center; gap:10px }
+}
+
+/* On mobile hide the header badge and show a compact message instead */
+@media (max-width:767px){
+    .card-header-custom .header-badge{ display:none !important }
+    /* Make the mobile header badge more compact and centered vertically */
+    .card-header-custom{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px }
+    .header-badge-mobile{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        background: rgba(0,0,0,0.12);
+        border-radius:6px;
+        padding:4px 8px;
+        height:30px;
+        font-size:0.85rem;
+        line-height:1;
+        margin:0 auto;
+        min-width: 120px;
+        box-sizing: border-box;
+    }
+    .header-badge-mobile a{ color: #fff; text-decoration:underline; font-weight:700 }
+}
+
+/* Desktop header layout */
+@media (min-width:768px){
+    .card-header-custom{ display:flex; align-items:center; justify-content:space-between; padding:28px 36px; text-align:left }
+    .card-header-custom .header-left{ display:flex; align-items:center; gap:18px }
+    .card-header-custom .logo-lg{ width:140px }
+    .card-header-custom .header-titles{ display:flex; flex-direction:column }
+    .card-header-custom .header-title{ font-size:1.6rem; margin:0; font-weight:700 }
+    .card-header-custom .header-subtitle{ margin:0; opacity:0.95; font-weight:500 }
+    .card-header-custom .header-right{ display:flex; align-items:center; gap:12px }
+    .card-header-custom .header-badge .badge{ padding:10px 14px; font-weight:700 }
+    .card-header-custom .header-alert{ max-width:420px }
 }
 
 /* Flex helpers to keep product cards aligned on small screens */
@@ -107,10 +179,13 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 }
 
 /* Reserve some minimum height so rows look uniform */
-.product-grid .product-card{ min-height:120px }
+.product-grid .product-card{ min-height:160px }
 
 /* Badges area should not push card too tall */
 .badges-container{ min-height:20px; margin-bottom:6px }
+/* Badges area should not push card too tall. Use minimal footprint when empty */
+.badges-container{ min-height:0; margin-bottom:0; display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.badges-container .badge{ margin-bottom:6px }
 
 /* On very small screens, reduce min-height so more cards fit vertically */
 @media (max-width:420px){
@@ -155,17 +230,17 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 
 /* Botón primario redondeado (header) */
 .main-card .btn-primary.rounded-pill{
-    background: linear-gradient(180deg,#0069d9,#005ba8);
+    background: var(--primary-blue);
     border: 1px solid rgba(0,93,166,0.12);
     box-shadow: 0 10px 28px rgba(3,54,95,0.12);
     color: #fff;
-    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    transition: transform .12s ease, box-shadow .12s ease;
 }
 .main-card .btn-primary.rounded-pill .bi{ margin-right:6px; }
 .main-card .btn-primary.rounded-pill:hover,
 .main-card .btn-primary.rounded-pill:focus{
     transform: translateY(-3px);
-    filter: brightness(1.03);
+    background: var(--secondary-blue);
     box-shadow: 0 18px 46px rgba(3,54,95,0.18);
 }
 
@@ -192,16 +267,16 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 
 /* Botones primarios globales */
 .btn-primary{
-    background: linear-gradient(180deg,#0069d9,#005ba8);
+    background: var(--primary-blue);
     border: 1px solid rgba(0,91,168,0.12);
     box-shadow: 0 8px 24px rgba(3,54,95,0.10);
     color: #fff;
-    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    transition: transform .12s ease, box-shadow .12s ease;
 }
 .btn-primary .bi{ margin-right:6px }
 .btn-primary:hover, .btn-primary:focus{
     transform: translateY(-3px);
-    filter: brightness(1.03);
+    background: var(--secondary-blue);
     box-shadow: 0 16px 46px rgba(3,54,95,0.16);
 }
 
@@ -224,6 +299,42 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 .btn:focus{
     outline: 3px solid rgba(0,93,166,0.12);
     outline-offset: 2px;
+}
+
+/* Inputs, selects and textareas: rounded corners and subtle transition for desktop */
+.form-control, .form-select, textarea {
+    border-radius: 10px;
+    transition: box-shadow .12s ease, border-color .12s ease, transform .08s ease;
+}
+
+/* Rounded input-group pairs: keep the left addon and the input visually rounded as a single pill */
+.rounded-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.06);
+    background: #fff;
+}
+/* keep the addon visually distinct but remove its own border so corners are unified */
+.rounded-group .input-group-text{
+    border: none;
+    background: #f8f9fa;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0.45rem 0.75rem;
+}
+.rounded-group .form-control{
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+.rounded-group:focus-within{ box-shadow: 0 10px 30px rgba(0,93,166,0.08); }
+
+@media (min-width: 992px){
+    /* Slightly larger rounding on desktop for a more modern look */
+    .form-control, .form-select, textarea { border-radius: 12px; }
 }
 
 /* Estilos específicos para la lista de 'Aperturas' (tarjetas) */
@@ -282,6 +393,28 @@ body { font-family: 'Poppins', sans-serif; background-color: #eef2f7; }
 /* Si por alguna razón existe un contenido muy largo, evitar barra horizontal */
 body{ overflow-x: hidden; }
 
+/* Snackbar (pequeña notificación flotante) */
+.snackbar{
+    position:fixed;
+    left:50%;
+    bottom:22px;
+    transform:translateX(-50%) translateY(12px);
+    background: rgba(255,255,255,0.98);
+    color:#08324a;
+    padding:10px 14px;
+    border-radius:10px;
+    box-shadow: 0 12px 30px rgba(3,54,95,0.12);
+    z-index:1300;
+    opacity:0; transition: transform .28s ease, opacity .28s ease;
+    min-width:280px; max-width:92%; display:flex; justify-content:center; align-items:center;
+}
+.snackbar.show{ transform:translateX(-50%) translateY(0); opacity:1 }
+.snackbar .snackbar-content{ display:flex; align-items:center; gap:12px }
+.snackbar a{ color: #0b5ed7; font-weight:600 }
+.snackbar .snackbar-close{ background:none; border:0; font-size:18px; line-height:1; cursor:pointer; color:#6c757d }
+.snackbar-warning{ background: linear-gradient(90deg,#fff7e6,#fff3d6); border:1px solid rgba(255,193,7,0.18); }
+.snackbar-danger{ background: linear-gradient(90deg,#fff0f0,#ffecec); border:1px solid rgba(220,53,69,0.12); }
+
 /* Ajustes finos para pantallas muy pequeñas (320px) */
 @media (max-width:320px){
     .main-card{ margin:8px; border-radius:10px; }
@@ -313,7 +446,7 @@ body{ overflow-x: hidden; }
     /* Buscar input y total-bar compactos */
     #searchInput{ padding-top:10px; padding-bottom:10px; font-size:0.95rem }
     .total-bar{ padding:10px; }
-    body{ padding-bottom:140px }
+    .has-total-bar { padding-bottom:140px }
 }
 
 /* Ajustes adicionales para móviles muy pequeños: reordenar card a columna y hacer botones full-width */
@@ -428,15 +561,17 @@ body{ overflow-x: hidden; }
         background: linear-gradient(180deg,#ffffff,#f6fbff);
         border-radius:12px;
         box-shadow:0 18px 48px rgba(3,54,95,0.08);
-        padding:14px;
+        padding:28px; /* más "aire" dentro de la tarjeta */
         display:flex;
         flex-direction:column;
-        gap:12px;
+        align-items:center; /* centrar contenido horizontalmente */
+        justify-content:center; /* centrar contenido verticalmente */
+        gap:20px; /* separar secciones dentro de la card */
         width:100%;
         box-sizing:border-box;
         overflow:hidden;
         border: 1px solid rgba(3,54,95,0.04);
-        border-left: 6px solid rgba(0,91,168,0.08);
+        position:relative;
         transition: box-shadow .18s ease, transform .14s ease, border-color .12s ease;
     }
     .ap-card:hover{ transform: translateY(-6px); box-shadow:0 26px 80px rgba(3,54,95,0.12); }
@@ -453,12 +588,17 @@ body{ overflow-x: hidden; }
     .ap-card-footer{ padding-top:6px; border-top:1px dashed rgba(3,54,95,0.03); }
     .ap-actions .btn{ box-shadow: 0 10px 30px rgba(3,54,95,0.12); }
     .ap-card-head{ display:flex; justify-content:flex-start }
-    .ap-card-body{ display:flex; gap:12px; align-items:center }
+    .ap-card-body{ display:flex; gap:22px; align-items:center; justify-content:center }
+
+    /* Añadir padding interno al contenedor de contenido para respirar */
+    .ap-card-content{ padding: 8px 12px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center }
     .ap-card-media{ flex:0 0 72px; width:72px; height:72px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#eaf4ff,#ffffff); box-shadow:0 8px 20px rgba(3,54,95,0.06); color:#0d6efd }
     .ap-card-content{ flex:1 1 auto; min-width:0 }
     .ap-title{ font-weight:700; color:#063856; font-size:1rem; line-height:1.1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
     .ap-meta{ color:#6c757d; font-size:.92rem; margin-top:6px }
-    .ap-card-footer{ display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px }
+     .ap-card-footer{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; position:relative }
+     /* Las acciones se colocan ahora en flujo normal y centradas */
+     .ap-actions{ display:flex; justify-content:center; align-items:center; position:static; transform:none }
     .ap-total{ color:#005ba8; font-weight:700; font-size:1rem }
 
     @media (max-width:480px){
@@ -466,10 +606,40 @@ body{ overflow-x: hidden; }
         .ap-card-body{ flex-direction:column; align-items:center; text-align:center }
         .ap-card-media{ width:64px;height:64px }
         .ap-card-footer{ flex-direction:column; align-items:center }
-        .ap-actions{ width:100%; display:flex; flex-direction:column; gap:8px }
+        /* En móvil las acciones vuelven al flujo normal y ocupan todo el ancho */
+        .ap-actions{ position:static; transform:none; width:100%; display:flex; flex-direction:column; gap:8px }
         .ap-actions .btn{ width:100%; padding:10px; border-radius:8px }
         .ap-total{ order:0; margin-bottom:6px }
     }
+
+    /* Franja decorativa roja->azul aplicada ahora a los botones .btn-qty (::before) */
+    .btn-qty{ position:relative; overflow:hidden }
+
+    /* Botones + / - coloreados (fondo completo) */
+    /* Botones + / - sutiles: fondo suave, borde y sombra ligera */
+    .btn-qty.btn-plus{
+        background: linear-gradient(180deg,#e9f2ff,#d7e9ff);
+        color: #063856;
+        border: 1px solid rgba(0,86,179,0.12);
+        box-shadow: 0 6px 12px rgba(6,86,179,0.06);
+    }
+    .btn-qty.btn-plus:hover, .btn-qty.btn-plus:focus{
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(6,86,179,0.10);
+    }
+    .btn-qty.btn-minus{
+        background: linear-gradient(180deg,#ffecec,#ffdede);
+        color: #063856;
+        border: 1px solid rgba(212,63,63,0.12);
+        box-shadow: 0 6px 12px rgba(212,63,63,0.06);
+    }
+    .btn-qty.btn-minus:hover, .btn-qty.btn-minus:focus{
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(212,63,63,0.10);
+    }
+
+    /* Ajustes estéticos para el número intermedio */
+    .qty-value{ min-width:32px; text-align:center; display:inline-block; font-weight:600 }
 
     /* Logo en header: estilo propio, tamaño y sombra */
     .app-logo{
@@ -504,6 +674,109 @@ body{ overflow-x: hidden; }
     @media (max-width:767px){
         .apertura-item-card.ap-open, .apertura-item-card.ap-closed{ border-left-width:6px; padding-left: 1rem }
     }
+
+/* Embedded form appearance: make forms look inserted (card) on mobile */
+@media (max-width:767px){
+    .embedded-form .card{
+        max-width: calc(100% - 32px);
+        margin: 12px auto !important;
+        border-radius: 12px;
+        box-shadow: 0 18px 50px rgba(3,54,95,0.08);
+        overflow: visible;
+        background: #fff;
+    }
+    .embedded-form .card-header-custom{ padding: 16px 16px; border-top-left-radius:12px; border-top-right-radius:12px }
+    .embedded-form .card-body-custom, .embedded-form .card-body{ padding: 14px }
+    .embedded-form .btn{ border-radius:10px }
+}
+
+@media (min-width:768px){
+    /* Slightly constrain width on desktop when using embedded form */
+    .embedded-form .card{ max-width: 820px; margin: 20px auto }
+}
+
+/* Fullscreen form: immersive checkout on mobile (Option A) */
+@media (max-width:767px){
+    .fullscreen-form, body.fullscreen-form {
+        background: #f4f6f9; /* subtle background behind the form */
+    }
+    .fullscreen-form .card,
+    body.fullscreen-form .card,
+    .fullscreen-form .main-card,
+    body.fullscreen-form .main-card{
+        position: fixed;
+        inset: 0;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+    /* Allow specific fullscreen views to remove the white card background/border
+       so the header gradient and the page background feel more immersive. */
+    .fullscreen-form .no-border-card,
+    body.fullscreen-form .no-border-card{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .fullscreen-form .no-border-card .card-body,
+    body.fullscreen-form .no-border-card .card-body,
+    .fullscreen-form .no-border-card .card-body-custom,
+    body.fullscreen-form .no-border-card .card-body-custom{
+        background: transparent !important;
+        padding: 18px; /* keep internal spacing */
+        color: #08324a; /* ensure text contrast */
+    }
+    }
+    .fullscreen-form .card-header-custom,
+    body.fullscreen-form .card-header-custom{
+        border-radius: 0; padding: 18px 16px;
+    }
+    .fullscreen-form .card-body, .fullscreen-form .card-body-custom,
+    body.fullscreen-form .card-body, body.fullscreen-form .card-body-custom{
+        padding: 18px; overflow:auto; flex: 1 1 auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Ensure fixed total-bar won't overlap content badly: push content above it */
+    body.fullscreen-form.has-total-bar .card-body,
+    body.fullscreen-form.has-total-bar .card-body-custom,
+    .fullscreen-form.has-total-bar .card-body,
+    .fullscreen-form.has-total-bar .card-body-custom{ padding-bottom: calc(140px + 18px); }
+    /* Keep footer buttons visible and tappable */
+    .fullscreen-form .total-bar, .fullscreen-form .card-footer, .fullscreen-form .modal-footer,
+    body.fullscreen-form .total-bar, body.fullscreen-form .card-footer, body.fullscreen-form .modal-footer{
+        z-index: 1300;
+    }
+}
+
+/* Make fullscreen pages flush: remove container side padding so card truly spans edge-to-edge */
+@media (max-width:767px){
+    .fullscreen-form .container, body.fullscreen-form .container{ padding-left:0; padding-right:0; max-width:100%; }
+
+    /* Compact header/nav in mobile when using fullscreen mode (similar to index) */
+    .fullscreen-form .card-header-custom,
+    body.fullscreen-form .card-header-custom,
+    .fullscreen-form .main-card .card-header-custom,
+    body.fullscreen-form .main-card .card-header-custom{
+        padding: 10px 12px;
+        align-items: center;
+    }
+    .fullscreen-form .card-header-custom .header-left,
+    .fullscreen-form .main-card .card-header-custom .header-left{ gap:10px }
+    .fullscreen-form .logo-lg,
+    body.fullscreen-form .logo-lg,
+    .fullscreen-form .main-card .logo-lg{ width:64px !important; height:auto }
+    .fullscreen-form .header-title,
+    body.fullscreen-form .header-title{ font-size:1rem }
+    .fullscreen-form .header-subtitle, body.fullscreen-form .header-subtitle{ font-size:0.78rem }
+    /* Reduce badge/mobile message height slightly */
+    .fullscreen-form .header-badge-mobile, body.fullscreen-form .header-badge-mobile{ height:26px; padding:3px 8px; font-size:0.82rem }
+}
 
 
 

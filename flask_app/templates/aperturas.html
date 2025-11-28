@@ -136,7 +136,9 @@
         <form method="post" action="/apertura" class="modal-content js-disable-on-submit">
                 <div class="modal-header">
                     <h5 class="modal-title">Nueva Apertura</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -150,7 +152,7 @@
                     <div class="form-text">La apertura no requiere monto inicial; se usará la suma de ventas al cierre.</div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary" data-wait-text="Abriendo...">Abrir</button>
+                    <button type="submit" class="btn btn-primary btn-classic" data-wait-text="Abriendo...">Abrir</button>
                 </div>
             </form>
         </div>
@@ -163,7 +165,9 @@
                 <form method="post" action="/apertura/{{ ap.id_apertura }}/cerrar" class="modal-content js-disable-on-submit">
                     <div class="modal-header">
                         <h5 class="modal-title">Cerrar Apertura #{{ ap.id_apertura }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar">
+                            <i class="bi bi-x-lg" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-2"><strong>Fecha inicio:</strong> {{ ap.fecha_inicio_apertura }}</div>

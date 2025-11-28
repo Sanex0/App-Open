@@ -110,20 +110,20 @@
         .btn-header-outline:hover {
             background: rgba(255,255,255,0.1);
             color: white;
-                        background: var(--primary-blue-gradient);
+            background: var(--primary-blue-gradient);
         }
 
         /* KPI Card (Última actividad) */
         .kpi-card {
             background: #fff;
-                        background: var(--primary-blue-gradient);
+            background: var(--primary-blue-gradient);
             padding: 20px 25px;
             box-shadow: 0 6px 22px rgba(3,34,63,0.06);
             border-left: 6px solid var(--primary-blue);
             background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
             display: flex;
             align-items: center;
-                        background: linear-gradient(180deg, rgba(0,107,194,0.12), rgba(0,93,166,0.06));
+            background: linear-gradient(180deg, rgba(0,107,194,0.12), rgba(0,93,166,0.06));
             transition: transform 0.2s;
         }
         .kpi-card:hover { transform: translateY(-3px); }
@@ -401,3 +401,101 @@
             /* Make total / ganancia more prominent on small screens */
             .ap-col-total { font-size: 1.8rem; font-weight: 800; color: var(--primary-blue); }
         }
+
+    /* ==========================
+       Modal styling: vibrante
+       ========================== */
+
+    /* Modal container */
+    .modal-content{
+        border-radius: 14px;
+        overflow: hidden;
+        border: 0;
+        box-shadow: 0 30px 80px rgba(3,34,63,0.18);
+    }
+
+    /* Header with gradient, icon accent and subtle height */
+    .modal-header{
+        background: var(--primary-blue-gradient);
+        padding: 16px 20px;
+        color: #fff;
+        border-bottom: none;
+        align-items: center;
+    }
+    .modal-header .modal-title{ color:#fff; font-weight:700; font-size:1.05rem; }
+    .modal-header .bi{ font-size:1.2rem; margin-right:8px; opacity:0.95 }
+    .modal-header .btn-close{ background: rgba(255,255,255,0.06); border-radius:8px; border:0; color:#fff; opacity:0.95 }
+
+    /* Ensure close icon inside header is visible, vertically centered and tappable */
+    .modal-header .btn-close{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:38px;
+        height:38px;
+        padding:0;
+        vertical-align: middle;
+    }
+    .modal-header .btn-close i{
+        color: #fff;
+        font-size:1.18rem;
+        line-height:1;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        margin:0;
+        transform: translateY(0.5px);
+    }
+    .modal-header .btn-close:hover{ background: rgba(255,255,255,0.12); transform: translateY(-1px) }
+
+    /* Body with soft card background */
+    .modal-body{ background: linear-gradient(180deg,#fbfdff,#ffffff); padding:20px; color:var(--text-dark) }
+    .modal-body .form-control, .modal-body .form-select, .modal-body textarea{
+        border-radius:10px; border:1px solid rgba(3,34,63,0.06); box-shadow: inset 0 2px 8px rgba(3,34,63,0.03);
+    }
+
+    /* Footer: transparent to blend with body and spaced actions */
+    .modal-footer{ background: transparent; border-top: none; padding:16px 20px; display:flex; gap:10px; justify-content:flex-end }
+    .modal-footer .btn{ border-radius:10px; padding: .55rem 1rem; font-weight:700 }
+
+    /* Action buttons with vivid gradients */
+    .modal-footer .btn-primary{
+        background: linear-gradient(90deg,var(--accent-1), var(--accent-2));
+        border: none; color: #fff; box-shadow: 0 10px 36px rgba(15,184,181,0.12);
+    }
+    .modal-footer .btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 18px 46px rgba(15,184,181,0.16); }
+
+    .modal-footer .btn-danger{
+        background: linear-gradient(90deg,var(--red-1), #c2155a);
+        border: none; color: #fff; box-shadow: 0 10px 36px rgba(225,29,72,0.12);
+    }
+    .modal-footer .btn-danger:hover{ transform: translateY(-2px); box-shadow: 0 18px 46px rgba(225,29,72,0.16); }
+
+    /* Classic blue for specific modal 'Abrir' button */
+    .modal-footer .btn-primary.btn-classic{
+        background: linear-gradient(180deg,#0d6efd 0%, #0b5ed7 100%);
+        border: 1px solid rgba(13,110,253,0.12);
+        box-shadow: 0 10px 30px rgba(13,110,253,0.12);
+        color: #fff;
+    }
+    .modal-footer .btn-primary.btn-classic:hover{ transform: translateY(-2px); box-shadow: 0 18px 46px rgba(13,110,253,0.18); }
+
+    /* Gentle pop animation when modal shows */
+    @keyframes modalPop{ from{ transform: translateY(12px) scale(.995); opacity:0 } to{ transform: translateY(0) scale(1); opacity:1 } }
+    .modal.show .modal-dialog{ animation: modalPop .34s cubic-bezier(.2,.9,.2,1); }
+
+    /* Specific tweaks for the resumen modal to make it feel special */
+    #modalResumenApertura .modal-header{ background: linear-gradient(90deg, var(--accent-3), var(--primary-blue)); }
+    #modalResumenApertura .modal-footer .btn-secondary{ background: rgba(255,255,255,0.06); color: #08324a; border-radius:8px }
+
+    /* Darken backdrop slightly and add blur for depth */
+    .modal-backdrop.show{ background-color: rgba(6,22,39,0.55); backdrop-filter: blur(3px); }
+
+    /* Mobile stacking: buttons full width and vertical order friendly */
+    @media (max-width: 576px){
+        .modal-dialog{ margin: 1rem; }
+        .modal-header{ padding:12px 14px }
+        .modal-body{ padding:14px }
+        .modal-footer{ padding:12px 14px; flex-direction:column-reverse; align-items:stretch }
+        .modal-footer .btn{ width:100% }
+    }

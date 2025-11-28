@@ -161,7 +161,7 @@
                         <form action="/login" method="POST" id="formLogin">
                             <div class="mb-4">
                                 <label for="email" class="form-label text-muted small text-uppercase fw-bold">Correo electrónico</label>
-                                <div class="input-group">
+                                <div class="input-group rounded-group">
                                     <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
                                     <input type="email" class="form-control" id="email" name="email" placeholder="nombre@clubrecrear.com" required>
                                 </div>
@@ -169,7 +169,7 @@
                             
                             <div class="mb-4">
                                 <label for="password" class="form-label text-muted small text-uppercase fw-bold">Contraseña</label>
-                                <div class="input-group">
+                                <div class="input-group rounded-group">
                                     <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                                     
                                     <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
@@ -204,7 +204,7 @@
                     if (!form.checkValidity()) { return; }
                     const width = btn.offsetWidth;
                     btn.style.width = width + 'px';
-                    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando...`;
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
                     btn.style.opacity = '0.7';
                     btn.style.pointerEvents = 'none';
                 });

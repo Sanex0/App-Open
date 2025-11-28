@@ -2,8 +2,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     function makeSpinnerHtml(text){
-        var txt = text || 'Enviando...';
-        return '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + txt;
+        // Return only the spinner element (no accompanying text)
+        return '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
     }
 
     var forms = document.querySelectorAll('form.js-disable-on-submit');

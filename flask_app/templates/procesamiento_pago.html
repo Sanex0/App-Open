@@ -10,14 +10,21 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
 </head>
-<body>
+<body class="fullscreen-form">
     <div class="container">
         <div class="row"> 
             <div class="col-12"> 
-                <div class="card">
+                <div class="card no-border-card">
                     <div class="card-header card-header-custom">
-                        <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Logo Club Recrear" style="max-width: 180px; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto;">
-                        <h5 class="fw-light mb-0"><i class="bi bi-receipt-cutoff me-2"></i>Datos del Cliente y Pago</h5>
+                            <div class="header-left">
+                                <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Logo Club Recrear" class="logo-lg">
+                                <div class="header-titles">
+                                    <h1 class="header-title">Datos del Cliente y Pago</h1>
+                                    <p class="header-subtitle mb-0">Revisa los datos antes de emitir</p>
+                                </div>
+                            </div>
+
+                            <!-- header-right removed per design: no back button or badge -->
                     </div>
 
                     <div class="card-body p-4 mt-2">
@@ -38,41 +45,47 @@
                             <input type="hidden" name="productos" value="{{ productos }}">
                             <input type="hidden" name="total" value="{{ total }}">
 
-                            <div class="form-row-horizontal">
-                                <div class="mb-3 wide">
-                                    <label for="nombre" class="form-label text-muted small text-uppercase fw-bold">Nombre del Cliente</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                        <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ej: Juan Pérez" required value="{{ nombre if nombre else '' }}">
-                                        <div class="invalid-feedback">Por favor ingrese el nombre.</div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="nombre" class="form-label text-muted small text-uppercase fw-bold">Nombre del Cliente</label>
+                                        <div class="input-group rounded-group">
+                                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ej: Juan Pérez" required value="{{ nombre if nombre else '' }}">
+                                            <div class="invalid-feedback">Por favor ingrese el nombre.</div>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div class="mb-3">
-                                    <label for="rut" class="form-label text-muted small text-uppercase fw-bold">RUT</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-card-heading"></i></span>
-                                        <input type="text" class="form-control" id="rut" name="rut" placeholder="Ej: 12345678-9" required value="{{ rut if rut else '' }}">
-                                        <div class="invalid-feedback" id="rut-feedback">Ingrese un RUT válido.</div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="rut" class="form-label text-muted small text-uppercase fw-bold">RUT</label>
+                                        <div class="input-group rounded-group">
+                                            <span class="input-group-text"><i class="bi bi-card-heading"></i></span>
+                                            <input type="text" class="form-control" id="rut" name="rut" placeholder="Ej: 12345678-9" required value="{{ rut if rut else '' }}">
+                                            <div class="invalid-feedback" id="rut-feedback">Ingrese un RUT válido.</div>
+                                        </div>
+                                        <div class="form-text text-muted small mt-1"><i class="bi bi-info-circle me-1"></i> Sin puntos, con guion y dígito verificador.</div>
                                     </div>
-                                    <div class="form-text text-muted small mt-1"><i class="bi bi-info-circle me-1"></i> Sin puntos, con guion y dígito verificador.</div>
                                 </div>
                             </div>
 
-                            <div class="form-row-horizontal">
-                                <div class="mb-3">
-                                    <label for="correo" class="form-label text-muted small text-uppercase fw-bold">Correo</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
-                                        <input type="email" class="form-control" id="correo" name="correo" placeholder="cliente@dominio.com" value="{{ correo if correo else '' }}">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="correo" class="form-label text-muted small text-uppercase fw-bold">Correo</label>
+                                        <div class="input-group rounded-group">
+                                            <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+                                            <input type="email" class="form-control" id="correo" name="correo" placeholder="cliente@dominio.com" value="{{ correo if correo else '' }}">
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div class="mb-3">
-                                    <label for="telefono" class="form-label text-muted small text-uppercase fw-bold">Teléfono</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
-                                        <input type="text" class="form-control" id="telefono" name="telefono" placeholder="9 1234 5678" value="{{ telefono if telefono else '' }}">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="telefono" class="form-label text-muted small text-uppercase fw-bold">Teléfono</label>
+                                        <div class="input-group rounded-group">
+                                            <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+                                            <input type="text" class="form-control" id="telefono" name="telefono" placeholder="9 1234 5678" value="{{ telefono if telefono else '' }}">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -136,7 +149,7 @@
                     event.preventDefault(); event.stopPropagation();
                     if (!rutValido && rutInput.value.trim() !== "") { rutInput.setCustomValidity("RUT Inválido"); document.getElementById('rut-feedback').textContent = 'El RUT ingresado no es válido.'; }
                     else { rutInput.setCustomValidity(""); }
-                } else { rutInput.setCustomValidity(""); var width = btn.offsetWidth; btn.style.width = width + 'px'; btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Emitiendo...`; btn.classList.add('disabled'); }
+                } else { rutInput.setCustomValidity(""); var width = btn.offsetWidth; btn.style.width = width + 'px'; btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`; btn.classList.add('disabled'); }
                 form.classList.add('was-validated');
             }, false);
             rutInput.addEventListener('input', function() { rutInput.setCustomValidity(""); });

@@ -94,7 +94,7 @@
         }
     </style>
 </head>
-<body>
+<body class="fullscreen-form">
     <div class="container">
         <div class="row"> 
             <div class="col-12"> 
@@ -131,7 +131,7 @@
                             <!-- Campo: Nombre -->
                             <div class="mb-4">
                                 <label for="nombre" class="form-label text-muted small text-uppercase fw-bold">Nombre del Cliente</label>
-                                <div class="input-group">
+                                <div class="input-group rounded-group">
                                     <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
                                     <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ej: Juan Pérez" required value="{{ nombre if nombre else '' }}">
                                     <div class="invalid-feedback">
@@ -143,7 +143,7 @@
                             <!-- Campo: RUT -->
                             <div class="mb-4">
                                 <label for="rut" class="form-label text-muted small text-uppercase fw-bold">RUT</label>
-                                <div class="input-group">
+                                <div class="input-group rounded-group">
                                     <span class="input-group-text"><i class="bi bi-card-heading"></i></span>
                                     <input type="text" class="form-control" id="rut" name="rut" placeholder="Ej: 12345678-9" required value="{{ rut if rut else '' }}">
                                     <div class="invalid-feedback" id="rut-feedback">
@@ -249,7 +249,7 @@
                     rutInput.setCustomValidity("");
                     var width = btn.offsetWidth;
                     btn.style.width = width + 'px';
-                    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Emitiendo...`;
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
                     btn.classList.add('disabled');
                 }
                 
