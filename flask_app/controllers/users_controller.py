@@ -497,12 +497,21 @@ def datos_cliente():
 
     if request.method == 'POST':
         # Validación: si el medio requiere voucher, asegúrese de que esté presente y sea numérico
-        medio = request.form.get('medio_pago') or None
-        voucher = request.form.get('voucher') or None
-        medios_con_voucher = {'debito', 'credito', 'transferencia'}
+        medio = request.form.get('medio_pago')
+        if medio:
+            medio = medio.strip()
+        
+        voucher = request.form.get('voucher')
+
+        # Auto-generar voucher para transferencia
+        if medio == 'transferencia':
+            voucher = datetime.now().strftime('%Y%m%d')
+
+        # Solo validamos voucher para debito y credito, ya que transferencia se autogenera
+        medios_con_voucher = {'debito', 'credito'}
         if medio in medios_con_voucher:
             if not voucher or str(voucher).strip() == '':
-                flash('Debe ingresar el número de voucher para el medio de pago seleccionado.', 'danger')
+                flash(f'Debe ingresar el número de voucher para el medio de pago seleccionado ({medio}).', 'danger')
                 return render_template('procesamiento_pago.html', **request.form)
             if not str(voucher).strip().isdigit():
                 flash('El número de voucher debe contener sólo dígitos.', 'danger')
