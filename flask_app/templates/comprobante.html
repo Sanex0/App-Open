@@ -103,9 +103,39 @@
             to { transform: translateY(0) rotateX(0); opacity: 1; }
         }
         @media print {
-            body { background: white; }
-            .action-buttons, .no-print { display: none !important; }
-            .receipt-card { box-shadow: none; border: 1px solid #ddd; }
+            body { 
+                background: white; 
+                display: block; 
+                height: auto; 
+                min-height: 0;
+            }
+            .receipt-container {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                perspective: none;
+                transform: none;
+            }
+            .receipt-card {
+                box-shadow: none;
+                border: none;
+                animation: none;
+                transform: none;
+            }
+            .action-buttons, .no-print { 
+                display: none !important; 
+            }
+            /* Ensure text is black for better contrast */
+            .receipt-header, .receipt-body, .receipt-footer, .amount-display, .info-label, .info-value {
+                color: black !important;
+            }
+            .receipt-header {
+                background: none !important;
+                border-bottom: 1px solid #000;
+            }
+            .receipt-header::after {
+                display: none;
+            }
         }
     </style>
 </head>

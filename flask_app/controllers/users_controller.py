@@ -1,5 +1,7 @@
 import smtplib
 import json
+import requests
+import pprint
 from decimal import Decimal
 from email.message import EmailMessage
 from datetime import datetime
@@ -46,9 +48,10 @@ def validar_rut(rut):
     return dv == dv_esperado
 
 
-def send_email(to_address, subject, body, html_body=None, sender=None):
+def send_email(to_address, subject, body, html_body=None, sender=None, attachments=None):
     """Enviar un email simple usando la configuración en app.config.
     Lanza excepciones en caso de error para que el llamador las maneje.
+    attachments: lista de dicts con keys 'filename', 'content' (bytes), 'maintype', 'subtype'
     """
     mail_server = app.config.get('MAIL_SERVER', 'localhost')
     mail_port = int(app.config.get('MAIL_PORT', 25) or 25)
@@ -68,6 +71,15 @@ def send_email(to_address, subject, body, html_body=None, sender=None):
     
     if html_body:
         msg.add_alternative(html_body, subtype='html')
+
+    if attachments:
+        for att in attachments:
+            msg.add_attachment(
+                att['content'],
+                maintype=att.get('maintype', 'application'),
+                subtype=att.get('subtype', 'octet-stream'),
+                filename=att.get('filename', 'attachment')
+            )
 
     if app.config.get('LOGIN_DEBUG'):
         try:
@@ -400,7 +412,8 @@ def apertura_crear():
 
     id_ap = Apertura.open_with_amount(id_caja_int, session['user_id'], saldo_inicio)
     if id_ap:
-        flash(f'Caja abierta (id {id_ap}).', 'success')
+        # flash(f'Caja abierta (id {id_ap}).', 'success')
+        pass
     else:
         flash('No se pudo abrir la caja.', 'danger')
     return redirect(url_for('listar_aperturas'))
@@ -439,7 +452,7 @@ def apertura_cerrar(id_apertura):
             return redirect(request.referrer or url_for('listar_aperturas'))
 
         if res is not False and res is not None:
-            flash('Caja cerrada correctamente.', 'success')
+            # flash('Caja cerrada correctamente.', 'success')
             # Guardar id para mostrar resumen automáticamente en la lista
             try:
                 session['apertura_resumen_id'] = id_apertura
@@ -579,7 +592,8 @@ def datos_cliente():
             if found and isinstance(found, list) and len(found) > 0:
                 id_cliente_fk = found[0].get('id_cliente')
                 try:
-                    flash(f'Cliente existente usado (id {id_cliente_fk}).', 'info')
+                    # flash(f'Cliente existente usado (id {id_cliente_fk}).', 'info')
+                    pass
                 except Exception:
                     pass
             else:
@@ -587,9 +601,11 @@ def datos_cliente():
                 id_cliente_fk = connectToMySQL('sistemas').query_db(ins_q, {'email': correo_cli, 'nombre': nombre_cli or 'Cliente', 'telefono': telefono_cli})
                 try:
                     if correo_cli:
-                        flash(f'Cliente creado (id {id_cliente_fk}) con correo {correo_cli}.', 'success')
+                        # flash(f'Cliente creado (id {id_cliente_fk}) con correo {correo_cli}.', 'success')
+                        pass
                     else:
-                        flash(f'Cliente creado (id {id_cliente_fk}) sin correo.', 'success')
+                        # flash(f'Cliente creado (id {id_cliente_fk}) sin correo.', 'success')
+                        pass
                 except Exception:
                     pass
 
@@ -625,13 +641,148 @@ def datos_cliente():
                 if app.config.get('LOGIN_DEBUG'):
                     print(f"[PAYMENT DEBUG] Error insertando medio de pago: {e}")
 
-            flash(f'Venta #{id_venta} registrada con éxito!', 'success')
+            # flash(f'Venta #{id_venta} registrada con éxito!', 'success')
+
+            # --- INTEGRACION FACTURA-X ---
+            pdf_link = None
+            api_success = False
+            
+            # 1. Preparar RUT
+            rut_final = "66666666-6"
+            if rut_cli:
+                clean_rut = rut_cli.replace('.', '').replace(' ', '').upper()
+                if '-' in clean_rut:
+                    rut_final = clean_rut
+                elif len(clean_rut) > 1:
+                    rut_final = f"{clean_rut[:-1]}-{clean_rut[-1]}"
+                if "NAN" in rut_final:
+                    rut_final = "66666666-6"
+            
+            # 2. Preparar Items
+            items_api = []
+            for idx, prod in enumerate(productos_list, 1):
+                cantidad = float(prod.get("cantidad", 1))
+                precio = float(prod.get("precio") or prod.get("PRECIO") or 0)
+                prod_name = prod.get("nombre") or prod.get("NOMBRE") or prod.get("name") or prod.get("NAME") or "Item Sin Nombre"
+                amount = precio * cantidad
+                
+                items_api.append({
+                    "line": str(idx),
+                    "name": str(prod_name)[:40],
+                    "quantity": str(int(cantidad)),
+                    "price": str(int(precio)),
+                    "amount": str(int(amount))
+                })
+            
+            total_str = str(int(float(total))) if total else "0"
+            
+            # 3. Construir JSON
+            now_dt = datetime.now()
+            factura_json = {
+                "document_type": "CL39", 
+                "test": True, 
+                "numbering": False, 
+                "document": {
+                    "number": "5001",
+                    "currency": "CLP",
+                    "issued_date": now_dt.strftime("%Y-%m-%d"),
+                    "issued_date_time": now_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "paymentTermsDescription": "CONTADO",
+                    "service_type": "3",
+                    "supplier": {
+                        "tax_id": "99522880-7", 
+                        "name": "ALIMENTAR SA",
+                        "address": "AV QUILIN 1561",
+                        "municipality": "QUILIN",
+                        "city": "SANTIAGO"
+                    },
+                    "customer": {
+                        "tax_id": rut_final,
+                        "name": nombre_cli or "Cliente",
+                        "activity": "COMERCIAL",
+                        "contactEmail": correo_cli if correo_cli else "",
+                        "contactPhone": "", 
+                        "address": "",
+                        "municipality": "",
+                        "city": ""
+                    },
+                    "amount": {
+                        "net": total_str,
+                        "exempt": "0",
+                        "vat_rate": "19.00",
+                        "vat": "0",
+                        "total": total_str
+                    },
+                    "taxes": [], 
+                    "items": items_api
+                },
+                "custom": {
+                    "Observaciones": "VENTA BOLETA",
+                    "MntTotalWords": "" 
+                }
+            }
+
+            # 4. Llamar API
+            API_URL = "https://services.factura-x.com/generation/cl/39" 
+            API_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3OTUyNjI0MDAsImlhdCI6MTc2MzczOTM4MiwianRpIjoiNlpVRWNwa3hkYVBTZDhjbkR1R3RLdyIsInVzZXJfaWQiOjMzLCJjb20uYXh0ZXJvaWQuaXNfc3RhZmYiOmZhbHNlLCJjb20uYXh0ZXJvaWQud29ya3NwYWNlcyI6eyJhY2NfTmNJTVBWa3FybTFnc1A2NkVRIjoiOTY4ODI3NTAtMiIsImFjY181b0p0aUt2NldrNkN0UUx4dzciOiI5OTUyMjg4MC03IiwiYWNjX0xjbnlKWWpNTFJ4S2FUYmVmdyI6Ijc4ODYxMjAwLTEifSwiY29tLmF4dGVyb2lkLmFsbG93ZWRfaW50ZXJ2YWwiOjEwMDB9.eoVYS5KqiQyGGtbsMc3kNMreuB0Cnoz8HImNmcxQUZY" 
+            WORKSPACE_ID = "acc_5oJtiKv6Wk6CtQLxw7"
+
+            headers = {
+                'Authorization': f"Bearer {API_TOKEN}", 
+                'x-ax-workspace': WORKSPACE_ID,
+                'Content-Type': 'application/json'
+            }
+
+            try:
+                if app.config.get('LOGIN_DEBUG'):
+                    print("[FACTURA-X] Enviando request...")
+                
+                response = requests.post(API_URL, json=factura_json, headers=headers, timeout=15)
+                
+                if response.status_code == 200 or response.status_code == 201:
+                    api_data = response.json()
+                    doc_id = None
+                    if 'id' in api_data:
+                        doc_id = api_data['id']
+                    elif 'document' in api_data and 'id' in api_data['document']:
+                        doc_id = api_data['document']['id']
+                    
+                    if 'document' in api_data and 'pdf_plot' in api_data['document']:
+                        pdf_link = api_data['document']['pdf_plot']
+                    
+                    if not pdf_link and doc_id:
+                        pdf_link = f"https://services.factura-x.com/documents/{doc_id}?format=pdf"
+                    
+                    if pdf_link:
+                        api_success = True
+                        # flash('Boleta electrónica generada correctamente.', 'success')
+                    else:
+                        flash('Boleta generada pero no se obtuvo link PDF.', 'warning')
+                else:
+                    error_msg = response.text
+                    try:
+                        error_json = response.json()
+                        if 'message' in error_json:
+                            error_msg = error_json['message']
+                            if "No available numbering" in error_msg:
+                                error_msg = "Error Crítico: Se han agotado los folios."
+                    except:
+                        pass
+                    flash(f'Error Factura-X: {error_msg}', 'warning')
+                    if app.config.get('LOGIN_DEBUG'):
+                        print(f"[FACTURA-X ERROR] {response.status_code} {response.text}")
+
+            except Exception as e:
+                flash(f'Error conectando con Factura-X: {e}', 'warning')
+                if app.config.get('LOGIN_DEBUG'):
+                    print(f"[FACTURA-X EXCEPTION] {e}")
 
             # Enviar Correo automáticamente si existe correo_cli
             email_sent = False
             email_error = None
             if correo_cli:
                 try:
+                    # Preparar contenido común (Texto y HTML del comprobante)
                     subject = f'Comprobante de Venta Club Recrear OPEN DAY'
                     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     try:
@@ -662,14 +813,52 @@ def datos_cliente():
                         id_voucher=id_voucher_val
                     )
 
-                    send_email(correo_cli, subject, body, html_body=html_body)
+                    # Configurar mensaje
+                    # msg = EmailMessage()
+                    # msg['Subject'] = subject
+                    # msg['From'] = 'no-reply@clubrecrear.cl'
+                    # msg['To'] = correo_cli
+                    # msg.set_content(body)
+                    # msg.add_alternative(html_body, subtype='html')
+
+                    attachments_list = []
+                    # Adjuntar PDF si existe
+                    if api_success and pdf_link:
+                        try:
+                            download_headers = headers if "services.factura-x.com" in pdf_link else {}
+                            pdf_response = requests.get(pdf_link, headers=download_headers, timeout=15)
+                            
+                            if pdf_response.status_code == 200:
+                                pdf_content = pdf_response.content
+                                attachments_list.append({
+                                    'content': pdf_content,
+                                    'maintype': 'application',
+                                    'subtype': 'pdf',
+                                    'filename': f"boleta_{rut_final}.pdf"
+                                })
+                                # msg.add_attachment(pdf_content, maintype='application', subtype='pdf', filename=f"boleta_{rut_final}.pdf")
+                            else:
+                                print(f"[PDF ERROR] Status: {pdf_response.status_code}")
+                        except Exception as e:
+                            print(f"[PDF ATTACH ERROR] {e}")
+                            flash(f'Error adjuntando PDF: {e}', 'warning')
+
+                    # Enviar usando la función auxiliar send_email
+                    send_email(correo_cli, subject, body, html_body=html_body, attachments=attachments_list)
+                    
+                    # with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+                    #     smtp.starttls()
+                    #     smtp.login('michigato0405@gmail.com', 'fdir lsmj argz rrrv')
+                    #     smtp.send_message(msg)
+                    
                     email_sent = True
-                    flash(f'Resumen de compra enviado a {correo_cli}', 'success')
+                    # flash(f'Resumen de compra enviado a {correo_cli}', 'success')
+
                 except Exception as e:
                     email_error = str(e)
                     if app.config.get('LOGIN_DEBUG'):
                         print(f"[EMAIL ERROR] Error enviando email a {correo_cli}: {e}")
-                    flash(f'No se pudo enviar el correo a {correo_cli}.', 'warning')
+                    flash(f'No se pudo enviar el correo a {correo_cli}. Error: {e}', 'warning')
 
         except Exception as e:
             flash(f'Error inesperado durante el registro de la venta: {e}', 'danger')
