@@ -2,7 +2,7 @@
             /* Primary palette (unified to requested gradient) */
             --primary-blue: #006bc2; /* main blue */
             --secondary-blue: #005da6; /* darker blue */
-            --primary-blue-gradient: linear-gradient(160deg, #006bc2 0%, #005da6 100%);
+            --primary-blue-gradient: linear-gradient(135deg, #006bc2 0%, #005da6 100%);
             /* Accent palette (more saturated) */
             --accent-1: #0fb8b5; /* teal */
             --accent-2: #00bcd4; /* cyan */
@@ -14,7 +14,7 @@
             --light-blue: #eaf4ff;
             --text-dark: #063856;
             --text-muted: #6c757d;
-            --card-radius: 14px;
+            --card-radius: 20px;
         }
 
         body {
@@ -25,22 +25,35 @@
         /* Header con Gradiente */
         .header-gradient {
             background: var(--primary-blue-gradient);
-            padding: 1rem 1rem;
+            padding: 1.5rem 1rem;
             color: white;
-            margin-bottom: 1.25rem;
-            box-shadow: 0 8px 25px rgba(0, 91, 168, 0.18);
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 60, 120, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-gradient::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -10%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
+            transform: rotate(30deg);
+            pointer-events: none;
         }
 
         /* Compact header (Option A) */
         .app-header-compact {
-            border-radius: 0 0 14px 14px;
+            border-radius: 0 0 20px 20px;
             position: sticky;
             top: 0;
             z-index: 1050;
-            backdrop-filter: saturate(120%) blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            transition: box-shadow .18s ease, padding .12s ease;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+            backdrop-filter: saturate(120%) blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
         .app-header-compact .header-logo { max-height: 46px; padding: 4px; border-radius: 8px; }
         .app-header-compact .app-header-center { min-width: 260px; }
@@ -115,27 +128,29 @@
 
         /* KPI Card (Última actividad) */
         .kpi-card {
-            background: #fff;
-            background: var(--primary-blue-gradient);
-            padding: 20px 25px;
-            box-shadow: 0 6px 22px rgba(3,34,63,0.06);
-            border-left: 6px solid var(--primary-blue);
-            background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+            padding: 25px 30px;
+            box-shadow: 0 10px 30px rgba(0, 60, 120, 0.08);
+            border-left: none;
+            border-radius: 20px;
             display: flex;
             align-items: center;
-            background: linear-gradient(180deg, rgba(0,107,194,0.12), rgba(0,93,166,0.06));
-            transition: transform 0.2s;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0, 107, 194, 0.1);
         }
-        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-card:hover { 
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 60, 120, 0.12);
+        }
         .kpi-icon {
-            background: linear-gradient(135deg, rgba(234,244,255,1) 0%, rgba(225,246,255,1) 100%);
+            background: #fff;
             color: var(--primary-blue);
-            width: 56px; height: 56px;
-            border-radius: 12px;
+            width: 60px; height: 60px;
+            border-radius: 16px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
-            margin-right: 18px;
-            box-shadow: 0 2px 6px rgba(3,34,63,0.06);
+            font-size: 1.6rem;
+            margin-right: 20px;
+            box-shadow: 0 8px 20px rgba(0, 60, 120, 0.1);
         }
 
         .kpi-card .badge {
@@ -183,61 +198,61 @@
         .apertura-item-card .btn-action {
             font-family: inherit;
             font-weight: 600;
-            font-size: .92rem;
-            padding: .32rem .9rem;
-            border-radius: 999px;
-            box-shadow: 0 6px 12px rgba(3,34,63,0.06);
-            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+            font-size: .95rem;
+            padding: .5rem 1.2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 60, 120, 0.1);
+            transition: all 0.3s ease;
             color: #fff;
             border: 0;
+        }
+        .apertura-item-card .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 60, 120, 0.15);
         }
         .apertura-item-card .btn-action:active { transform: translateY(1px); }
 
         /* Variant accents for buttons */
         .apertura-item-card.variant-accent-1 .btn-action {
-            background: linear-gradient(90deg, rgba(15,184,181,0.98), rgba(15,184,181,0.86));
-            color: #fff;
+            background: linear-gradient(135deg, var(--accent-1), #0d9e9b);
         }
         .apertura-item-card.variant-accent-2 .btn-action {
-            background: linear-gradient(90deg, rgba(0,188,212,0.98), rgba(0,188,212,0.86));
-            color: #012;
+            background: linear-gradient(135deg, var(--accent-2), #00acc1);
+            color: #fff;
         }
         .apertura-item-card.variant-accent-3 .btn-action {
-            background: linear-gradient(90deg, rgba(255,87,34,0.98), rgba(255,87,34,0.86));
-            color: #fff;
+            background: linear-gradient(135deg, var(--accent-3), #f4511e);
         }
 
         /* Buttons inside open cards use primary blue accent for emphasis */
         .apertura-item-card.is-open .btn-action {
-            background: var(--primary-blue-gradient);
-            color: #fff;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
         }
 
         /* Closed card buttons: unified red tone */
         .apertura-item-card.is-closed .btn-action {
-            background: linear-gradient(90deg, rgba(225,29,72,0.98), rgba(200,20,60,0.86));
-            color: #fff;
+            background: linear-gradient(135deg, #ef5350, #e53935);
         }
 
         /* Make sure these overrides don't clash with small screens (reduce shadow) */
         @media (max-width: 576px) {
-            .apertura-item-card .btn-action { box-shadow: 0 2px 8px rgba(3,34,63,0.04); font-size: .88rem; padding: .28rem .7rem; }
+            .apertura-item-card .btn-action { box-shadow: 0 2px 8px rgba(3,34,63,0.04); font-size: .88rem; padding: .4rem .8rem; }
         }
 
         /* Always-red close button */
         .btn-close-action {
             font-family: inherit;
-            font-weight: 700;
-            font-size: .9rem;
-            padding: .32rem .82rem;
-            border-radius: 999px;
-            background: linear-gradient(90deg, rgba(225,29,72,0.98), rgba(200,20,60,0.86));
+            font-weight: 600;
+            font-size: .95rem;
+            padding: .5rem 1.2rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ef5350, #c62828);
             color: #fff !important;
             border: 0 !important;
-            box-shadow: 0 6px 12px rgba(225,29,72,0.08);
-            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+            box-shadow: 0 4px 12px rgba(225,29,72,0.15);
+            transition: all 0.3s ease;
         }
-        .btn-close-action:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(225,29,72,0.12); }
+        .btn-close-action:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(225,29,72,0.25); }
         .btn-close-action:active { transform: translateY(1px); }
 
         @media (max-width: 576px) {
@@ -261,22 +276,36 @@
 
         /* Filas tipo Tarjeta (Reemplazo de Tabla) */
         .apertura-item-card {
-            background: linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+            background: #fff;
             border-radius: var(--card-radius);
             margin-bottom: 1rem;
-            padding: 1rem 1.5rem;
-            box-shadow: 0 6px 18px rgba(2,48,84,0.04);
+            padding: 1.2rem 1.8rem;
+            box-shadow: 0 10px 30px rgba(0, 60, 120, 0.08);
             border: 1px solid rgba(13,86,156,0.06);
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            transition: transform 0.18s, box-shadow 0.18s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             overflow: hidden;
+            animation: slideUp 0.5s ease-out backwards;
         }
+        
+        /* Stagger animation for items */
+        .apertura-item-card:nth-child(1) { animation-delay: 0.1s; }
+        .apertura-item-card:nth-child(2) { animation-delay: 0.15s; }
+        .apertura-item-card:nth-child(3) { animation-delay: 0.2s; }
+        .apertura-item-card:nth-child(4) { animation-delay: 0.25s; }
+        .apertura-item-card:nth-child(5) { animation-delay: 0.3s; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .apertura-item-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 36px rgba(2,48,84,0.08);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 60, 120, 0.12);
             border-color: rgba(13,86,156,0.12);
         }
 
@@ -335,24 +364,29 @@
         .ap-col-actions { width: auto; }
 
         /* Status badges improved */
-        .ap-col-status .badge { padding: .45rem .75rem; border-radius: 999px; font-weight:700; }
+        .ap-col-status .badge { 
+            padding: .5rem .9rem; 
+            border-radius: 8px; 
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
         /* Status badges: reflect the same accent/border as the card */
         .ap-col-status .bg-open {
-            background: linear-gradient(180deg, rgba(0,107,194,0.12), rgba(0,93,166,0.06));
+            background: rgba(0, 107, 194, 0.1);
             color: var(--primary-blue);
-            border: 1px solid rgba(0,107,194,0.18);
+            border: 1px solid rgba(0, 107, 194, 0.2);
         }
         /* Closed badges: uniform red color regardless of card variant */
         .ap-col-status .bg-closed {
-            background: linear-gradient(180deg, rgba(225,29,72,0.22), rgba(225,29,72,0.08));
-            color: #7a0f2b;
-            border: 1px solid rgba(225,29,72,0.28);
+            background: rgba(229, 57, 53, 0.1);
+            /* color: #c62828 !important; */
+            border: 1px solid rgba(229, 57, 53, 0.2);
         }
 
         /* Ensure all closed badges use the same text color for consistency */
         .apertura-item-card.is-closed .badge,
         .ap-col-status .bg-closed {
-            color: #ffffff !important;
+            /* color override handled above */
         }
 
         /* Badges */
@@ -367,9 +401,10 @@
             .ap-col-id, .ap-col-info, .ap-col-status, .ap-col-dates, .ap-col-total, .ap-col-actions {
                 width: 100%; text-align: left;
             }
-            .ap-col-dates { text-align: left; display: flex; gap: 15px; }
+            .ap-col-dates { text-align: left; display: flex; gap: 15px; flex-wrap: wrap; }
             .ap-col-total { font-size: 1.5rem; margin-top: 5px; }
-            .ap-col-actions { display: flex; gap: 10px; margin-top: 5px; }
+            .ap-col-actions { display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap; width: 100%; }
+            .ap-col-actions .btn { flex: 1 1 auto; min-width: 120px; justify-content: center; }
             /* On smaller screens keep the left accent but make it visible and well spaced */
             .apertura-item-card::before {
                 display: block;
@@ -395,11 +430,17 @@
         /* Extra small screens tweaks */
         @media (max-width: 576px) {
             .apertura-item-card::before { left: 10px; width: 5px; top: 10px; bottom: 10px; border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
-            .apertura-item-card { padding-left: 1.5rem; }
+            .apertura-item-card { padding-left: 1.5rem; padding-right: 1rem; }
             .kpi-card { padding: 14px; }
             .kpi-card .badge { font-size: .8rem; padding: .3rem .5rem; }
             /* Make total / ganancia more prominent on small screens */
             .ap-col-total { font-size: 1.8rem; font-weight: 800; color: var(--primary-blue); }
+            /* Make action buttons full width on mobile for better tap targets */
+            .ap-col-actions { flex-direction: column; gap: 8px; }
+            .ap-col-actions .btn { width: 100%; min-width: unset; text-align: center; padding: 0.5rem 1rem; }
+            /* Export button on mobile: make icon larger and add padding */
+            .ap-col-actions .btn-success { font-size: 1rem; padding: 0.6rem 1rem; }
+            .ap-col-actions .btn-success .bi { font-size: 1.2rem; }
         }
 
     /* ==========================
@@ -485,7 +526,7 @@
     .modal.show .modal-dialog{ animation: modalPop .34s cubic-bezier(.2,.9,.2,1); }
 
     /* Specific tweaks for the resumen modal to make it feel special */
-    #modalResumenApertura .modal-header{ background: linear-gradient(90deg, var(--accent-3), var(--primary-blue)); }
+    #modalResumenApertura .modal-header{ background: linear-gradient(90deg, var(--text-dark), var(--primary-blue)); }
     #modalResumenApertura .modal-footer .btn-secondary{ background: rgba(255,255,255,0.06); color: #08324a; border-radius:8px }
 
     /* Darken backdrop slightly and add blur for depth */
@@ -493,9 +534,20 @@
 
     /* Mobile stacking: buttons full width and vertical order friendly */
     @media (max-width: 576px){
-        .modal-dialog{ margin: 1rem; }
+        .modal-dialog{ margin: 0.5rem; }
         .modal-header{ padding:12px 14px }
-        .modal-body{ padding:14px }
-        .modal-footer{ padding:12px 14px; flex-direction:column-reverse; align-items:stretch }
-        .modal-footer .btn{ width:100% }
+        .modal-body{ padding:14px; font-size: 0.95rem; }
+        .modal-body dl.row dt { font-size: 0.9rem; }
+        .modal-body dl.row dd { font-size: 0.9rem; }
+        .modal-footer{ padding:12px 14px; flex-direction:column-reverse; align-items:stretch; gap:8px }
+        .modal-footer .btn{ width:100%; font-size: 1rem; padding: 0.65rem 1rem; }
+        .modal-footer .btn .bi { font-size: 1.1rem; margin-right: 0.4rem; }
+        /* Make export button prominent on mobile */
+        .modal-footer .btn-success { font-weight: 700; }
+    }
+    
+    /* Ensure modal is scrollable on very small screens */
+    @media (max-width: 400px){
+        .modal-dialog{ margin: 0.25rem; }
+        .modal-body{ max-height: 60vh; overflow-y: auto; }
     }

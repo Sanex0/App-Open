@@ -8,10 +8,15 @@ try:
 	# Carga .env desde la raíz del proyecto (un nivel arriba de flask_app)
 	base_dir = Path(__file__).resolve().parent.parent
 	dotenv_path = base_dir / '.env'
-	load_dotenv(dotenv_path)
-except Exception:
-	# Si python-dotenv no está instalado o .env no existe, continuamos usando os.environ
-	pass
+	if dotenv_path.exists():
+		load_dotenv(dotenv_path)
+		print(f" * Configuración cargada desde {dotenv_path}")
+	else:
+		print(" * Archivo .env no encontrado")
+except ImportError:
+	print(" * Advertencia: 'python-dotenv' no está instalado. Las variables del archivo .env no se cargarán.")
+except Exception as e:
+	print(f" * Error cargando .env: {e}")
 
 app = Flask(__name__)
 

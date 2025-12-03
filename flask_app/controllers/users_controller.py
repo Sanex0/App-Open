@@ -46,7 +46,7 @@ def validar_rut(rut):
     return dv == dv_esperado
 
 
-def send_email(to_address, subject, body, sender=None):
+def send_email(to_address, subject, body, html_body=None, sender=None):
     """Enviar un email simple usando la configuración en app.config.
     Lanza excepciones en caso de error para que el llamador las maneje.
     """
@@ -65,6 +65,9 @@ def send_email(to_address, subject, body, sender=None):
     msg['From'] = effective_sender
     msg['To'] = to_address
     msg.set_content(body)
+    
+    if html_body:
+        msg.add_alternative(html_body, subtype='html')
 
     if app.config.get('LOGIN_DEBUG'):
         try:
@@ -106,9 +109,10 @@ def login():
         if not user:
             print(f"[LOGIN DEBUG] No se encontró usuario para email: {email}")
         else:
-            stored = user.password or ''
-            prefix = stored[:6] if len(stored) >= 6 else stored
-            print(f"[LOGIN DEBUG] Usuario encontrado id={getattr(user, 'id_usuario', None)}; hash_len={len(stored)}; hash_prefix={prefix}")
+            # stored = user.password or ''
+            # prefix = stored[:6] if len(stored) >= 6 else stored
+            # print(f"[LOGIN DEBUG] Usuario encontrado id={getattr(user, 'id_usuario', None)}; hash_len={len(stored)}; hash_prefix={prefix}")
+            pass
 
     # Diferenciar mensajes: usuario inexistente vs contraseña incorrecta.
     # Para evitar *user enumeration* en producción, mostramos un mensaje genérico
@@ -155,19 +159,19 @@ def index_html():
     
     cajas = Caja.get_all()
     allowed_cajas = [c for c in cajas if c.id_caja in allowed_caja_ids]
-    if app.config.get('LOGIN_DEBUG'):
-        try:
-            print(f"[LOGIN DEBUG] user.id_usuario={getattr(user,'id_usuario', None)}")
-            print(f"[LOGIN DEBUG] permisos raw count={len(permisos)}")
-            for i, p in enumerate(permisos):
-                print(f"[LOGIN DEBUG] permiso[{i}] = {{'id_permiso': getattr(p,'id_permiso', None), 'id_usuario_fk': getattr(p,'id_usuario_fk', None), 'vta_cajas_id_caja': getattr(p,'vta_cajas_id_caja', None)}}")
-            print(f"[LOGIN DEBUG] allowed_caja_ids = {allowed_caja_ids}")
-            print(f"[LOGIN DEBUG] total cajas from DB = {len(cajas)}")
-            for c in cajas[:20]:
-                print(f"[LOGIN DEBUG] caja: id_caja={getattr(c,'id_caja', None)}, detalle_caja={getattr(c,'detalle_caja', None)}")
-            print(f"[LOGIN DEBUG] allowed_cajas_count = {len(allowed_cajas)}")
-        except Exception as e:
-            print(f"[LOGIN DEBUG] error printing debug info: {e}")
+    # if app.config.get('LOGIN_DEBUG'):
+    #     try:
+    #         print(f"[LOGIN DEBUG] user.id_usuario={getattr(user,'id_usuario', None)}")
+    #         print(f"[LOGIN DEBUG] permisos raw count={len(permisos)}")
+    #         for i, p in enumerate(permisos):
+    #             print(f"[LOGIN DEBUG] permiso[{i}] = {{'id_permiso': getattr(p,'id_permiso', None), 'id_usuario_fk': getattr(p,'id_usuario_fk', None), 'vta_cajas_id_caja': getattr(p,'vta_cajas_id_caja', None)}}")
+    #         print(f"[LOGIN DEBUG] allowed_caja_ids = {allowed_caja_ids}")
+    #         print(f"[LOGIN DEBUG] total cajas from DB = {len(cajas)}")
+    #         for c in cajas[:20]:
+    #             print(f"[LOGIN DEBUG] caja: id_caja={getattr(c,'id_caja', None)}, detalle_caja={getattr(c,'detalle_caja', None)}")
+    #         print(f"[LOGIN DEBUG] allowed_cajas_count = {len(allowed_cajas)}")
+    #     except Exception as e:
+    #         print(f"[LOGIN DEBUG] error printing debug info: {e}")
     
     return render_template('index.html', user=user, cajas=allowed_cajas)
 
@@ -597,6 +601,8 @@ def datos_cliente():
             # 4. Registrar medio de pago en vta_mediopago
             medio = cliente_temp.get('medio_pago') or request.form.get('medio_pago')
             voucher_val = cliente_temp.get('voucher') or request.form.get('voucher')
+            id_voucher_val = 0  # Inicializar por defecto para evitar UnboundLocalError
+            
             try:
                 if medio:
                     try:
@@ -617,7 +623,7 @@ def datos_cliente():
             email_error = None
             if correo_cli:
                 try:
-                    subject = f'Comprobante de Venta #{id_venta}'
+                    subject = f'Comprobante de Venta Club Recrear OPEN DAY'
                     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     try:
                         total_num = int(float(total))
@@ -636,7 +642,18 @@ def datos_cliente():
                         f"{saludo},\n\nGracias por su compra.\n\nResumen:\n"
                         f"- Nº Venta: {id_venta}\n- Total: ${total_num:,}\n- Fecha: {now}\n\nSaludos,\nClub Recrear"
                     )
-                    send_email(correo_cli, subject, body)
+                    
+                    # Render HTML voucher for email
+                    html_body = render_template('email_voucher.html', 
+                        fecha=now,
+                        total=total_num,
+                        id_venta=id_venta,
+                        cliente={'nombre': nombre_cli, 'correo': correo_cli},
+                        medio_pago=medio,
+                        id_voucher=id_voucher_val
+                    )
+
+                    send_email(correo_cli, subject, body, html_body=html_body)
                     email_sent = True
                     flash(f'Resumen de compra enviado a {correo_cli}', 'success')
                 except Exception as e:

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px;">
+    <div class="container" style="width: 100%; max-width: 380px; margin: 0 auto;">
+        <div class="card" style="background: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div class="header" style="background-color: #006bc2; background: linear-gradient(135deg, #006bc2 0%, #004b8d 100%); padding: 30px 20px; text-align: center; color: #ffffff;">
+                <!-- Logo placeholder or text -->
+                <h1 style="margin: 0; font-size: 24px; font-weight: 300; text-transform: uppercase; letter-spacing: 2px; color: #ffffff;">CLUB RECREAR</h1>
+                <p style="margin: 5px 0 0; font-size: 12px; opacity: 0.8; color: #ffffff;">Comprobante de Pago</p>
+                <p style="margin: 0; font-size: 12px; opacity: 0.8; color: #ffffff;">{{ fecha }}</p>
+            </div>
+            <div class="body" style="padding: 30px 25px; text-align: center;">
+                <div class="label" style="color: #6c757d; font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Total Pagado</div>
+                <div class="amount" style="font-size: 36px; font-weight: bold; color: #006bc2; margin: 10px 0 25px; letter-spacing: -1px;">${{ '{:,.0f}'.format(total).replace(',', '.') }}</div>
+                
+                <div style="text-align: left;">
+                    <div class="row" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e0e0e0; padding: 10px 0; font-size: 14px;">
+                        <span class="row-label" style="color: #6c757d;">Nº Venta</span>
+                        <span class="row-value" style="color: #212529; font-weight: 600; text-align: right;">#{{ id_venta }}</span>
+                    </div>
+                    <div class="row" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e0e0e0; padding: 10px 0; font-size: 14px;">
+                        <span class="row-label" style="color: #6c757d;">Cliente</span>
+                        <span class="row-value" style="color: #212529; font-weight: 600; text-align: right;">{{ cliente.nombre or 'General' }}</span>
+                    </div>
+                    <div class="row" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e0e0e0; padding: 10px 0; font-size: 14px;">
+                        <span class="row-label" style="color: #6c757d;">Medio Pago</span>
+                        <span class="row-value" style="color: #212529; font-weight: 600; text-align: right; text-transform: uppercase;">{{ medio_pago or 'Efectivo' }}</span>
+                    </div>
+                    {% if id_voucher and id_voucher != 0 %}
+                    <div class="row" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e0e0e0; padding: 10px 0; font-size: 14px;">
+                        <span class="row-label" style="color: #6c757d;">Voucher</span>
+                        <span class="row-value" style="color: #212529; font-weight: 600; text-align: right;">{{ id_voucher }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="footer" style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 2px dashed #dee2e6; color: #6c757d; font-size: 12px;">
+                <p style="margin: 0;">¡Gracias por su preferencia!</p>
+                <p style="margin: 5px 0 0; font-size: 10px;">Este es un comprobante electrónico generado automáticamente.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

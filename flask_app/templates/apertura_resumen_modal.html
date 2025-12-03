@@ -1,5 +1,5 @@
 <div class="modal fade" id="modalResumenApertura" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Resumen Apertura #{{ apertura.id_apertura }}</h5>
@@ -9,29 +9,27 @@
             </div>
             <div class="modal-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-4">Caja</dt>
-                    <dd class="col-sm-8">{{ caja.detalle_caja if caja else apertura.id_caja_fk }}</dd>
+                    <dt class="col-5 col-sm-4">Caja</dt>
+                    <dd class="col-7 col-sm-8">{{ caja.detalle_caja if caja else apertura.id_caja_fk }}</dd>
 
-                    <dt class="col-sm-4">Fecha inicio</dt>
-                    <dd class="col-sm-8">{{ apertura.fecha_inicio_apertura | datetimeformat }}</dd>
+                    <dt class="col-5 col-sm-4">Fecha inicio</dt>
+                    <dd class="col-7 col-sm-8"><small class="d-sm-none">{{ apertura.fecha_inicio_apertura | datetimeformat }}</small><span class="d-none d-sm-inline">{{ apertura.fecha_inicio_apertura | datetimeformat }}</span></dd>
 
-                    <dt class="col-sm-4">Fecha término</dt>
-                    <dd class="col-sm-8">{{ apertura.fecha_termino_apertura | datetimeformat }}</dd>
+                    <dt class="col-5 col-sm-4">Fecha término</dt>
+                    <dd class="col-7 col-sm-8"><small class="d-sm-none">{{ apertura.fecha_termino_apertura | datetimeformat }}</small><span class="d-none d-sm-inline">{{ apertura.fecha_termino_apertura | datetimeformat }}</span></dd>
 
-                    <dt class="col-sm-4">Total ventas</dt>
-                    <dd class="col-sm-8">${{ "{:,.0f}".format(total).replace(',', '.') }}</dd>
+                    <dt class="col-5 col-sm-4">Total ventas</dt>
+                    <dd class="col-7 col-sm-8 fw-bold text-success">${{ "{:,.0f}".format(total).replace(',', '.') }}</dd>
 
-
-
-                    <dt class="col-sm-4">Observaciones</dt>
-                    <dd class="col-sm-8">{% if apertura.observaciones %}{{ apertura.observaciones }}{% else %}-{% endif %}</dd>
+                    <dt class="col-5 col-sm-4">Observaciones</dt>
+                    <dd class="col-7 col-sm-8"><small>{% if apertura.observaciones %}{{ apertura.observaciones }}{% else %}-{% endif %}</small></dd>
                 </dl>
             </div>
-            <div class="modal-footer">
-                <a href="{{ url_for('export_apertura_xlsx', id_apertura=apertura.id_apertura) }}" class="btn btn-success me-2" target="_blank">
+            <div class="modal-footer flex-column flex-sm-row gap-2">
+                <a href="{{ url_for('export_apertura_xlsx', id_apertura=apertura.id_apertura) }}" class="btn btn-success w-100 w-sm-auto order-sm-1" target="_blank">
                     <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar Excel
                 </a>
-                <a href="/aperturas" class="btn btn-secondary">Cerrar</a>
+                <a href="/aperturas" class="btn btn-secondary w-100 w-sm-auto order-sm-2">Cerrar</a>
             </div>
         </div>
     </div>

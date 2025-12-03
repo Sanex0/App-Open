@@ -10,41 +10,39 @@
 </head>
 <body>
   <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3>Resumen Apertura #{{ apertura.id_apertura }}</h3>
-      <div>
-        <a href="{{ url_for('export_apertura_xlsx', id_apertura=apertura.id_apertura) }}" class="btn btn-success me-2" target="_blank">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 gap-3">
+      <h3 class="mb-0">Resumen Apertura #{{ apertura.id_apertura }}</h3>
+      <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-sm-auto">
+        <a href="{{ url_for('export_apertura_xlsx', id_apertura=apertura.id_apertura) }}" class="btn btn-success w-100 w-sm-auto" target="_blank">
           <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar Excel
         </a>
-        <a href="/aperturas" class="btn btn-outline-secondary">Volver</a>
+        <a href="/aperturas" class="btn btn-outline-secondary w-100 w-sm-auto">Volver</a>
       </div>
     </div>
 
-    <div class="card mb-3">
+    <div class="card mb-3 shadow-sm">
       <div class="card-body">
         <dl class="row mb-0">
-          <dt class="col-sm-3">Caja</dt>
-          <dd class="col-sm-9">{{ caja.detalle_caja if caja else apertura.id_caja_fk }}</dd>
+          <dt class="col-5 col-sm-3">Caja</dt>
+          <dd class="col-7 col-sm-9">{{ caja.detalle_caja if caja else apertura.id_caja_fk }}</dd>
 
-          <dt class="col-sm-3">Fecha inicio</dt>
-          <dd class="col-sm-9">{{ apertura.fecha_inicio_apertura | datetimeformat }}</dd>
+          <dt class="col-5 col-sm-3">Fecha inicio</dt>
+          <dd class="col-7 col-sm-9"><small class="d-sm-none">{{ apertura.fecha_inicio_apertura | datetimeformat }}</small><span class="d-none d-sm-inline">{{ apertura.fecha_inicio_apertura | datetimeformat }}</span></dd>
 
-          <dt class="col-sm-3">Fecha término</dt>
-          <dd class="col-sm-9">{{ apertura.fecha_termino_apertura | datetimeformat }}</dd>
+          <dt class="col-5 col-sm-3">Fecha término</dt>
+          <dd class="col-7 col-sm-9"><small class="d-sm-none">{{ apertura.fecha_termino_apertura | datetimeformat }}</small><span class="d-none d-sm-inline">{{ apertura.fecha_termino_apertura | datetimeformat }}</span></dd>
 
-          <dt class="col-sm-3">Total ventas</dt>
-          <dd class="col-sm-9">${{ "{:,.0f}".format(total).replace(',', '.') }}</dd>
+          <dt class="col-5 col-sm-3">Total ventas</dt>
+          <dd class="col-7 col-sm-9 fw-bold text-success fs-5">${{ "{:,.0f}".format(total).replace(',', '.') }}</dd>
 
-
-
-          <dt class="col-sm-3">Observaciones</dt>
-          <dd class="col-sm-9">{% if apertura.observaciones %}{{ apertura.observaciones }}{% else %}-{% endif %}</dd>
+          <dt class="col-5 col-sm-3">Observaciones</dt>
+          <dd class="col-7 col-sm-9"><small>{% if apertura.observaciones %}{{ apertura.observaciones }}{% else %}-{% endif %}</small></dd>
         </dl>
       </div>
     </div>
 
-    <div class="mb-3">
-      <a href="/aperturas" class="btn btn-primary">Volver a Aperturas</a>
+    <div class="mb-3 d-flex flex-column flex-sm-row gap-2">
+      <a href="/aperturas" class="btn btn-primary w-100 w-sm-auto">Volver a Aperturas</a>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

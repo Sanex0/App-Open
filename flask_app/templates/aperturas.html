@@ -37,8 +37,6 @@
                     </div>
             </div>
 
-            {# center removed per request: subtitle and last-activity removed #}
-
             <div class="d-flex gap-2 app-header-right">
                 <button class="btn btn-header-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaApertura">
                     <i class="bi bi-plus-lg me-1"></i> Nueva Apertura
@@ -66,8 +64,6 @@
                         <p class="mb-0 fw-bold fs-5">
                             {{ most_recent.fecha_inicio_apertura | datetimeformat }}
                         </p>
-
-                        {# KPI chips removed as requested #}
                     </div>
                 </div>
             </div>
@@ -94,7 +90,7 @@
                         {% if ap.estado_apertura == 1 %}
                             <span class="badge badge-pill bg-open variant-open"><i class="bi bi-unlock-fill me-1"></i> Abierta</span>
                         {% else %}
-                            <span class="badge badge-pill bg-closed variant-accent-3"><i class="bi bi-lock-fill me-1"></i> Cerrada</span>
+                            <span class="badge badge-pill bg-closed variant-open"><i class="bi bi-lock-fill me-1"></i> Cerrada</span>
                         {% endif %}
                     </div>
 
@@ -110,14 +106,14 @@
                     <div class="ap-col-actions">
                         {% if ap.estado_apertura == 1 %}
                             <button type="button" class="btn btn-sm rounded-pill px-3 btn-close-action" data-bs-toggle="modal" data-bs-target="#modalCerrar{{ ap.id_apertura }}">
-                                Cerrar
+                                <span class="d-none d-sm-inline">Cerrar</span><i class="bi bi-x-circle d-sm-none"></i>
                             </button>
-                            <a href="/caja/{{ ap.id_caja_fk }}" class="btn btn-sm rounded-pill px-3 ms-1 btn-action">
-                                Ir a Caja
+                            <a href="/caja/{{ ap.id_caja_fk }}" class="btn btn-sm rounded-pill btn-action">
+                                <span class="d-none d-sm-inline">Ir a Caja</span><i class="bi bi-box-arrow-up-right d-sm-none"></i>
                             </a>
                         {% else %}
-                            <a href="{{ url_for('export_apertura_xlsx', id_apertura=ap.id_apertura) }}" class="btn btn-sm btn-success rounded-pill px-3 ms-1" target="_blank">
-                                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar Excel
+                            <a href="{{ url_for('export_apertura_xlsx', id_apertura=ap.id_apertura) }}" class="btn btn-sm btn-success rounded-pill px-2 px-sm-3" target="_blank" title="Exportar Excel">
+                                <i class="bi bi-file-earmark-spreadsheet-fill"></i><span class="d-none d-md-inline ms-1">Exportar</span>
                             </a>
                         {% endif %}
                     </div>

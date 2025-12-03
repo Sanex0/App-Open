@@ -1,38 +1,39 @@
 import pymysql.cursors
 import pyodbc
+import os
 
 class MySQLConnection:
     def __init__(self, db='sistemas'):
-        print(f"[MySQLConnection] Conectando a la base de datos: {db}")
+        # print(f"[MySQLConnection] Conectando a la base de datos: {db}")
         connection = pymysql.connect(
-            host='181.212.204.13',
-            port=3306,
-            user='root',
-            password='1Qazxsw2123_?',
+            host=os.environ.get('DB_HOST', '181.212.204.13'),
+            port=int(os.environ.get('DB_PORT', 3306)),
+            user=os.environ.get('DB_USER', 'root'),
+            password=os.environ.get('DB_PASSWORD', '1Qazxsw2123_?'),
             db=db,
             charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )
         connection.autocommit(True)
         self.connection = connection
-        print("[MySQLConnection] Conexión establecida.")
+        # print("[MySQLConnection] Conexión establecida.")
 
     def query_db(self, query, data=None):
-        print(f"[MySQLConnection] Ejecutando query: {query} | Data: {data}")
+        # print(f"[MySQLConnection] Ejecutando query: {query} | Data: {data}")
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(query, data) if data else cursor.execute(query)
                 if query.strip().lower().startswith("insert"):
                     self.connection.commit()
-                    print("[MySQLConnection] Insert realizado, lastrowid:", cursor.lastrowid)
+                    # print("[MySQLConnection] Insert realizado, lastrowid:", cursor.lastrowid)
                     return cursor.lastrowid
                 elif query.strip().lower().startswith("select"):
                     result = cursor.fetchall()
-                    print(f"[MySQLConnection] Select retornó {len(result)} filas.")
+                    # print(f"[MySQLConnection] Select retornó {len(result)} filas.")
                     return result
                 else:
                     self.connection.commit()
-                    print("[MySQLConnection] Query ejecutada y commit realizado.")
+                    # print("[MySQLConnection] Query ejecutada y commit realizado.")
                     return True
         except Exception as e:
             print("[MySQLConnection] Error:", e)

@@ -9,29 +9,136 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+    <style>
+        /* Custom styles for this page */
+        .checkout-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 60, 120, 0.15);
+            overflow: hidden;
+            background: #fff;
+            animation: slideUp 0.5s ease-out;
+        }
+        .checkout-header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            padding: 40px 30px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            color: white;
+        }
+        .decorative-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .circle-1 { width: 150px; height: 150px; top: -50px; left: -50px; }
+        .circle-2 { width: 100px; height: 100px; bottom: -30px; right: 10%; }
+        .circle-3 { width: 60px; height: 60px; top: 20%; right: -20px; }
+        
+        .form-section {
+            padding: 30px;
+        }
+        
+        @media (max-width: 576px) {
+            .form-section {
+                padding: 20px;
+            }
+            .checkout-header {
+                padding: 30px 20px;
+            }
+        }
+        
+        .custom-input-group {
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 5px 15px;
+        }
+        .custom-input-group:focus-within {
+            background: #fff;
+            border-color: var(--primary-blue);
+            box-shadow: 0 8px 20px rgba(0, 107, 194, 0.1);
+            transform: translateY(-2px);
+        }
+        .custom-input-group i {
+            font-size: 1.2rem;
+            color: var(--q-muted);
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+        .custom-input-group:focus-within i {
+            color: var(--primary-blue);
+        }
+        .custom-input-group input, .custom-input-group select {
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            padding: 10px 0;
+            font-weight: 500;
+            color: var(--q-text);
+            flex: 1;
+            width: auto;
+        }
+        .custom-input-group input:focus, .custom-input-group select:focus {
+            box-shadow: none;
+            background: transparent;
+        }
+        
+        .total-card {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px dashed rgba(0, 107, 194, 0.3);
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .btn-confirm {
+            background: linear-gradient(90deg, var(--primary-blue), var(--q-accent));
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+        .btn-confirm:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 107, 194, 0.3);
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="fullscreen-form">
-    <div class="container">
-        <div class="row"> 
-            <div class="col-12"> 
-                <div class="card no-border-card">
-                    <div class="card-header card-header-custom">
-                            <div class="header-left">
-                                <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Logo Club Recrear" class="logo-lg">
-                                <div class="header-titles">
-                                    <h1 class="header-title">Datos del Cliente y Pago</h1>
-                                    <p class="header-subtitle mb-0">Revisa los datos antes de emitir</p>
-                                </div>
-                            </div>
-
-                            <!-- header-right removed per design: no back button or badge -->
+<body class="fullscreen-form bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center m-0"> 
+            <div class="col-12 col-md-8 col-lg-6"> 
+                <div class="checkout-card">
+                    <div class="checkout-header">
+                        <div class="decorative-circle circle-1"></div>
+                        <div class="decorative-circle circle-2"></div>
+                        <div class="decorative-circle circle-3"></div>
+                        
+                        <div class="position-relative z-1">
+                            <img src="{{ url_for('static', filename='logo-club-recrear.svg') }}" alt="Logo Club Recrear" class="mb-3" style="height: 60px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">
+                            <h2 class="fw-bold mb-1">Finalizar Venta</h2>
+                            <p class="mb-0 opacity-75 small">Ingresa los datos del cliente</p>
+                        </div>
                     </div>
 
-                    <div class="card-body p-4 mt-2">
+                    <div class="form-section">
                         {% with messages = get_flashed_messages(with_categories=true) %}
                             {% if messages %}
                                 {% for category, message in messages %}
-                                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' }} alert-dismissible fade show mb-4 shadow-sm" role="alert">
+                                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' }} alert-dismissible fade show mb-4 shadow-sm border-0" role="alert">
                                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                         {{ message }}
                                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -45,71 +152,66 @@
                             <input type="hidden" name="productos" value="{{ productos }}">
                             <input type="hidden" name="total" value="{{ total }}">
 
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="correo" class="form-label text-muted small text-uppercase fw-bold">Correo</label>
-                                        <div class="input-group rounded-group">
-                                            <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
-                                            <input type="email" class="form-control" id="correo" name="correo" placeholder="cliente@dominio.com" value="{{ correo if correo else '' }}">
-                                        </div>
+                            <div class="mb-4">
+                                <label class="form-label text-muted small text-uppercase fw-bold mb-2">Información de Contacto</label>
+                                
+                                <div class="mb-3">
+                                    <div class="custom-input-group">
+                                        <i class="bi bi-envelope-fill text-primary"></i>
+                                        <input type="email" class="form-control" id="correo" name="correo" placeholder="Correo electrónico (opcional)" value="{{ correo if correo else '' }}">
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="nombre" class="form-label text-muted small text-uppercase fw-bold">Nombre del Cliente</label>
-                                        <div class="input-group rounded-group">
-                                            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ej: Juan Pérez" value="{{ nombre if nombre else '' }}">
-                                            <div class="invalid-feedback">Por favor ingrese el nombre.</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="telefono" class="form-label text-muted small text-uppercase fw-bold">Teléfono</label>
-                                        <div class="input-group rounded-group">
-                                            <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
-                                            <input type="text" class="form-control" id="telefono" name="telefono" placeholder="9 1234 5678" value="{{ telefono if telefono else '' }}">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="custom-input-group">
+                                            <i class="bi bi-person-fill text-success"></i>
+                                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre Cliente" value="{{ nombre if nombre else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="custom-input-group">
+                                            <i class="bi bi-telephone-fill text-warning"></i>
+                                            <input type="text" class="form-control" id="telefono" name="telefono" placeholder="Teléfono" value="{{ telefono if telefono else '' }}">
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="medio_pago" class="form-label text-muted small text-uppercase fw-bold">Medio de Pago</label>
-                                <select class="form-select" id="medio_pago" name="medio_pago" required>
-                                    <option value="debito">Débito</option>
-                                    <option value="credito">Crédito</option>
-                                    <option value="efectivo">Efectivo</option>
-                                    <option value="transferencia">Transferencia</option>
-                                </select>
-                            </div>
+                            <div class="mb-4">
+                                <label class="form-label text-muted small text-uppercase fw-bold mb-2">Detalles del Pago</label>
+                                
+                                <div class="custom-input-group mb-3">
+                                    <i class="bi bi-credit-card-2-front-fill text-info"></i>
+                                    <select class="form-select" id="medio_pago" name="medio_pago" required>
+                                        <option value="debito">Débito</option>
+                                        <option value="credito">Crédito</option>
+                                        <option value="efectivo">Efectivo</option>
+                                        <option value="transferencia">Transferencia</option>
+                                    </select>
+                                </div>
 
-                            <div class="mb-3" id="voucher-group" style="display:none;">
-                                <label for="voucher" class="form-label text-muted small text-uppercase fw-bold">Nº de Voucher</label>
-                                <div class="input-group rounded-group">
-                                    <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                                    <input type="text" inputmode="numeric" pattern="\d*" maxlength="12" class="form-control" id="voucher" name="voucher" placeholder="Ej: 123456" disabled>
+                                <div class="custom-input-group" id="voucher-group" style="display:none;">
+                                    <i class="bi bi-123 text-secondary"></i>
+                                    <input type="text" inputmode="numeric" pattern="\d*" maxlength="12" class="form-control" id="voucher" name="voucher" placeholder="Número de Voucher" disabled>
                                 </div>
                             </div>
 
-                            <div class="alert alert-light border text-center mb-4">
-                                <small class="text-muted text-uppercase fw-bold">Total a Pagar</small>
-                                <h3 class="text-primary fw-bold mb-0">${{ "{:,.0f}".format(total|float).replace(',', '.') }}</h3>
+                            <div class="total-card">
+                                <small class="text-muted text-uppercase fw-bold d-block mb-1">Total a Pagar</small>
+                                <h2 class="text-primary fw-bold mb-0 display-6">${{ "{:,.0f}".format(total|float).replace(',', '.') }}</h2>
                             </div>
 
-                            <div class="d-grid mb-2">
-                                <button type="submit" class="btn btn-primary rounded-pill shadow-sm" id="btnSubmit">
-                                    <i class="bi bi-check-circle-fill me-2"></i>Confirmar y Emitir
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-confirm rounded-pill shadow-sm text-white" id="btnSubmit">
+                                    Confirmar y Emitir <i class="bi bi-arrow-right-circle-fill ms-2"></i>
                                 </button>
                             </div>
 
-                            <div class="text-center mt-3">
-                                <a href="{{ url_for('ver_caja', id_caja=id_caja) }}" class="text-decoration-none text-muted small"><i class="bi bi-arrow-left me-1"></i>Volver a la caja</a>
+                            <div class="text-center">
+                                <a href="{{ url_for('ver_caja', id_caja=id_caja) }}" class="text-decoration-none text-muted small hover-link">
+                                    <i class="bi bi-arrow-left me-1"></i>Volver a la caja
+                                </a>
                             </div>
 
                         </form>
