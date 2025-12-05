@@ -115,6 +115,37 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* FIX: Validation Styles Override - Remove default icons and use border highlight */
+        .was-validated .form-control:valid, .form-control.is-valid, 
+        .was-validated .form-control:invalid, .form-control.is-invalid,
+        .was-validated .form-select:valid, .form-select.is-valid,
+        .was-validated .form-select:invalid, .form-select.is-invalid {
+            background-image: none !important;
+            padding-right: 0.75rem !important;
+        }
+
+        /* Valid State */
+        .was-validated .custom-input-group:has(.form-control:valid),
+        .was-validated .custom-input-group:has(.form-select:valid) {
+            border-color: var(--bs-success);
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-success-rgb), 0.25);
+        }
+        .was-validated .custom-input-group:has(.form-control:valid) i,
+        .was-validated .custom-input-group:has(.form-select:valid) i {
+            color: var(--bs-success) !important;
+        }
+
+        /* Invalid State */
+        .was-validated .custom-input-group:has(.form-control:invalid),
+        .was-validated .custom-input-group:has(.form-select:invalid) {
+            border-color: var(--bs-danger);
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-danger-rgb), 0.25);
+        }
+        .was-validated .custom-input-group:has(.form-control:invalid) i,
+        .was-validated .custom-input-group:has(.form-select:invalid) i {
+            color: var(--bs-danger) !important;
+        }
     </style>
 </head>
 <body class="fullscreen-form bg-light">

@@ -192,6 +192,10 @@ def ver_caja(id_caja):
     if 'user_id' not in session:
         return redirect('/')
     
+    # Obtener información de la caja actual
+    current_caja = Caja.get_by_id(id_caja)
+    is_variable = current_caja.es_variable if current_caja else 0
+    
     productos = Producto.get_by_caja(id_caja)
     cajas = Caja.get_all()
     # Apertura activa (por caja)
@@ -221,7 +225,7 @@ def ver_caja(id_caja):
         if app.config.get('LOGIN_DEBUG'):
             print(f"[LOGIN DEBUG] Error al restaurar cantidades desde session: {e}")
 
-    return render_template('caja.html', productos=productos, id_caja=id_caja, cajas=cajas, apertura=active_apertura, apertura_totals=apertura_totals, can_open_apertura=can_open_apertura)
+    return render_template('caja.html', productos=productos, id_caja=id_caja, cajas=cajas, apertura=active_apertura, apertura_totals=apertura_totals, can_open_apertura=can_open_apertura, current_caja=current_caja, is_variable=is_variable)
 
 
 @app.route('/aperturas')
@@ -351,22 +355,63 @@ def resumen_pago():
         flash('No hay una apertura activa para esta caja. Abra una en Gestión de Aperturas antes de procesar pagos.', 'warning')
         return redirect(url_for('listar_aperturas'))
 
-    productos_en_caja = Producto.get_by_caja(id_caja_int)
+    # Verificar si es caja de precio variable
+    precio_variable = request.form.get('precio_variable')
     
-    productos_a_pagar = []
-    total = 0
-    
-    for prod in productos_en_caja:
-        if str(prod.id_producto) in productos_seleccionados_ids:
-            cantidad = int(request.form.get(f'cantidad_{prod.id_producto}', 1))
-            prod.cantidad = cantidad
-            total += (prod.precio or 0) * cantidad
-            productos_a_pagar.append(prod)
+    if precio_variable:
+        # Manejo para caja de precio variable
+        productos_en_caja = Producto.get_by_caja(id_caja_int)
+        if not productos_en_caja:
+            flash('No hay productos asignados a esta caja.', 'danger')
+            return redirect(url_for('ver_caja', id_caja=id_caja_int))
+        
+        prod = productos_en_caja[0]  # Usar el primer (y único) producto
+        
+        # El id_producto que viene del form puede ser diferente al que está en prod
+        # Buscar la cantidad en el form usando cualquier campo que empiece con 'cantidad_'
+        cantidad = 1
+        for key in request.form.keys():
+            if key.startswith('cantidad_'):
+                cantidad = int(request.form.get(key, 1))
+                break
+        
+        precio_unitario = float(precio_variable)
+        
+        # Calcular total
+        total = precio_unitario * cantidad
+        
+        # Asignar valores al producto
+        prod.cantidad = cantidad
+        prod.precio = precio_unitario  # Precio unitario para el detalle
+        
+        productos_a_pagar = [prod]
+        
+        # Debug
+        if app.config.get('LOGIN_DEBUG'):
+            print(f"[PRECIO VARIABLE] precio_unitario={precio_unitario}, cantidad={cantidad}, total={total}")
+    else:
+        # Flujo normal
+        productos_en_caja = Producto.get_by_caja(id_caja_int)
+        
+        productos_a_pagar = []
+        total = 0
+        
+        for prod in productos_en_caja:
+            if str(prod.id_producto) in productos_seleccionados_ids:
+                cantidad = int(request.form.get(f'cantidad_{prod.id_producto}', 1))
+                prod.cantidad = cantidad
+                total += (prod.precio or 0) * cantidad
+                productos_a_pagar.append(prod)
     
     try:
         session['productos_boleta'] = json.loads(json.dumps(productos_a_pagar, default=decimal_default))
         session['total_boleta'] = total
         session['last_id_caja'] = id_caja
+        
+        # Debug
+        if app.config.get('LOGIN_DEBUG'):
+            print(f"[SESSION] total_boleta guardado: {total}")
+            print(f"[SESSION] productos_boleta: {session['productos_boleta']}")
     except Exception as e:
         print(f"[ERROR] No se pudo guardar en session: {e}")
         flash('Hubo un error al procesar los productos.', 'danger')
@@ -610,11 +655,20 @@ def datos_cliente():
                     pass
 
             # 3. Crear la Venta (con referencia al cliente)
+            # Determinar lista de precio según la caja
+            id_listaprecio = 168 if id_caja_int == 6 else 176
+            
+            # Agregar id_listaprecio a cada producto
+            for prod in productos_list:
+                prod['id_listaprecio'] = id_listaprecio
+            
             data_venta = {
                 'total_ventas': total,
                 'id_apertura': active_apertura.id_apertura,
-                'envio_correo': 1 if correo_cli else 0,
-                'id_cliente_fk': id_cliente_fk
+                'envio_correo': 1,  # Por defecto 1, se cambiará a 0 solo si hay error al enviar
+                'id_cliente_fk': id_cliente_fk,
+                'id_correlativo_flex': 0, # Valor por defecto para nuevo campo requerido
+                'envio_boleta': 0         # Valor por defecto
             }
 
             id_venta = Venta.create(data_venta, productos_list)
@@ -643,7 +697,9 @@ def datos_cliente():
 
             # flash(f'Venta #{id_venta} registrada con éxito!', 'success')
 
-            # --- INTEGRACION FACTURA-X ---
+            # --- INTEGRACION FACTURA-X DESHABILITADA ---
+            skip_api = True  # Deshabilitado para todas las cajas
+            
             pdf_link = None
             api_success = False
             
@@ -676,111 +732,112 @@ def datos_cliente():
             
             total_str = str(int(float(total))) if total else "0"
             
-            # 3. Construir JSON
-            now_dt = datetime.now()
-            factura_json = {
-                "document_type": "CL39", 
-                "test": True, 
-                "numbering": False, 
-                "document": {
-                    "number": "5001",
-                    "currency": "CLP",
-                    "issued_date": now_dt.strftime("%Y-%m-%d"),
-                    "issued_date_time": now_dt.strftime("%Y-%m-%dT%H:%M:%S"),
-                    "paymentTermsDescription": "CONTADO",
-                    "service_type": "3",
-                    "supplier": {
-                        "tax_id": "99522880-7", 
-                        "name": "ALIMENTAR SA",
-                        "address": "AV QUILIN 1561",
-                        "municipality": "QUILIN",
-                        "city": "SANTIAGO"
+            # 3. Construir JSON (solo si no es caja variable)
+            if not skip_api:
+                now_dt = datetime.now()
+                factura_json = {
+                    "document_type": "CL39", 
+                    "test": True, 
+                    "numbering": False, 
+                    "document": {
+                        "number": "5001",
+                        "currency": "CLP",
+                        "issued_date": now_dt.strftime("%Y-%m-%d"),
+                        "issued_date_time": now_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "paymentTermsDescription": "CONTADO",
+                        "service_type": "3",
+                        "supplier": {
+                            "tax_id": "99522880-7", 
+                            "name": "ALIMENTAR SA",
+                            "address": "AV QUILIN 1561",
+                            "municipality": "QUILIN",
+                            "city": "SANTIAGO"
+                        },
+                        "customer": {
+                            "tax_id": rut_final,
+                            "name": nombre_cli or "Cliente",
+                            "activity": "COMERCIAL",
+                            "contactEmail": correo_cli if correo_cli else "",
+                            "contactPhone": "", 
+                            "address": "",
+                            "municipality": "",
+                            "city": ""
+                        },
+                        "amount": {
+                            "net": total_str,
+                            "exempt": "0",
+                            "vat_rate": "19.00",
+                            "vat": "0",
+                            "total": total_str
+                        },
+                        "taxes": [], 
+                        "items": items_api
                     },
-                    "customer": {
-                        "tax_id": rut_final,
-                        "name": nombre_cli or "Cliente",
-                        "activity": "COMERCIAL",
-                        "contactEmail": correo_cli if correo_cli else "",
-                        "contactPhone": "", 
-                        "address": "",
-                        "municipality": "",
-                        "city": ""
-                    },
-                    "amount": {
-                        "net": total_str,
-                        "exempt": "0",
-                        "vat_rate": "19.00",
-                        "vat": "0",
-                        "total": total_str
-                    },
-                    "taxes": [], 
-                    "items": items_api
-                },
-                "custom": {
-                    "Observaciones": "VENTA BOLETA",
-                    "MntTotalWords": "" 
+                    "custom": {
+                        "Observaciones": "VENTA BOLETA",
+                        "MntTotalWords": "" 
+                    }
                 }
-            }
 
-            # 4. Llamar API
-            API_URL = "https://services.factura-x.com/generation/cl/39" 
-            API_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3OTUyNjI0MDAsImlhdCI6MTc2MzczOTM4MiwianRpIjoiNlpVRWNwa3hkYVBTZDhjbkR1R3RLdyIsInVzZXJfaWQiOjMzLCJjb20uYXh0ZXJvaWQuaXNfc3RhZmYiOmZhbHNlLCJjb20uYXh0ZXJvaWQud29ya3NwYWNlcyI6eyJhY2NfTmNJTVBWa3FybTFnc1A2NkVRIjoiOTY4ODI3NTAtMiIsImFjY181b0p0aUt2NldrNkN0UUx4dzciOiI5OTUyMjg4MC03IiwiYWNjX0xjbnlKWWpNTFJ4S2FUYmVmdyI6Ijc4ODYxMjAwLTEifSwiY29tLmF4dGVyb2lkLmFsbG93ZWRfaW50ZXJ2YWwiOjEwMDB9.eoVYS5KqiQyGGtbsMc3kNMreuB0Cnoz8HImNmcxQUZY" 
-            WORKSPACE_ID = "acc_5oJtiKv6Wk6CtQLxw7"
+                # 4. Llamar API
+                API_URL = "https://services.factura-x.com/generation/cl/39" 
+                API_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3OTUyNjI0MDAsImlhdCI6MTc2MzczOTM4MiwianRpIjoiNlpVRWNwa3hkYVBTZDhjbkR1R3RLdyIsInVzZXJfaWQiOjMzLCJjb20uYXh0ZXJvaWQuaXNfc3RhZmYiOmZhbHNlLCJjb20uYXh0ZXJvaWQud29ya3NwYWNlcyI6eyJhY2NfTmNJTVBWa3FybTFnc1A2NkVRIjoiOTY4ODI3NTAtMiIsImFjY181b0p0aUt2NldrNkN0UUx4dzciOiI5OTUyMjg4MC03IiwiYWNjX0xjbnlKWWpNTFJ4S2FUYmVmdyI6Ijc4ODYxMjAwLTEifSwiY29tLmF4dGVyb2lkLmFsbG93ZWRfaW50ZXJ2YWwiOjEwMDB9.eoVYS5KqiQyGGtbsMc3kNMreuB0Cnoz8HImNmcxQUZY" 
+                WORKSPACE_ID = "acc_5oJtiKv6Wk6CtQLxw7"
 
-            headers = {
-                'Authorization': f"Bearer {API_TOKEN}", 
-                'x-ax-workspace': WORKSPACE_ID,
-                'Content-Type': 'application/json'
-            }
+                headers = {
+                    'Authorization': f"Bearer {API_TOKEN}", 
+                    'x-ax-workspace': WORKSPACE_ID,
+                    'Content-Type': 'application/json'
+                }
 
-            try:
-                if app.config.get('LOGIN_DEBUG'):
-                    print("[FACTURA-X] Enviando request...")
-                
-                response = requests.post(API_URL, json=factura_json, headers=headers, timeout=15)
-                
-                if response.status_code == 200 or response.status_code == 201:
-                    api_data = response.json()
-                    doc_id = None
-                    if 'id' in api_data:
-                        doc_id = api_data['id']
-                    elif 'document' in api_data and 'id' in api_data['document']:
-                        doc_id = api_data['document']['id']
-                    
-                    if 'document' in api_data and 'pdf_plot' in api_data['document']:
-                        pdf_link = api_data['document']['pdf_plot']
-                    
-                    if not pdf_link and doc_id:
-                        pdf_link = f"https://services.factura-x.com/documents/{doc_id}?format=pdf"
-                    
-                    if pdf_link:
-                        api_success = True
-                        # flash('Boleta electrónica generada correctamente.', 'success')
-                    else:
-                        flash('Boleta generada pero no se obtuvo link PDF.', 'warning')
-                else:
-                    error_msg = response.text
-                    try:
-                        error_json = response.json()
-                        if 'message' in error_json:
-                            error_msg = error_json['message']
-                            if "No available numbering" in error_msg:
-                                error_msg = "Error Crítico: Se han agotado los folios."
-                    except:
-                        pass
-                    flash(f'Error Factura-X: {error_msg}', 'warning')
+                try:
                     if app.config.get('LOGIN_DEBUG'):
-                        print(f"[FACTURA-X ERROR] {response.status_code} {response.text}")
+                        print("[FACTURA-X] Enviando request...")
+                    
+                    response = requests.post(API_URL, json=factura_json, headers=headers, timeout=15)
+                    
+                    if response.status_code == 200 or response.status_code == 201:
+                        api_data = response.json()
+                        doc_id = None
+                        if 'id' in api_data:
+                            doc_id = api_data['id']
+                        elif 'document' in api_data and 'id' in api_data['document']:
+                            doc_id = api_data['document']['id']
+                        
+                        if 'document' in api_data and 'pdf_plot' in api_data['document']:
+                            pdf_link = api_data['document']['pdf_plot']
+                        
+                        if not pdf_link and doc_id:
+                            pdf_link = f"https://services.factura-x.com/documents/{doc_id}?format=pdf"
+                        
+                        if pdf_link:
+                            api_success = True
+                            # flash('Boleta electrónica generada correctamente.', 'success')
+                        else:
+                            flash('Boleta generada pero no se obtuvo link PDF.', 'warning')
+                    else:
+                        error_msg = response.text
+                        try:
+                            error_json = response.json()
+                            if 'message' in error_json:
+                                error_msg = error_json['message']
+                                if "No available numbering" in error_msg:
+                                    error_msg = "Error Crítico: Se han agotado los folios."
+                        except:
+                            pass
+                        flash(f'Error Factura-X: {error_msg}', 'warning')
+                        if app.config.get('LOGIN_DEBUG'):
+                            print(f"[FACTURA-X ERROR] {response.status_code} {response.text}")
 
-            except Exception as e:
-                flash(f'Error conectando con Factura-X: {e}', 'warning')
-                if app.config.get('LOGIN_DEBUG'):
-                    print(f"[FACTURA-X EXCEPTION] {e}")
+                except Exception as e:
+                    flash(f'Error conectando con Factura-X: {e}', 'warning')
+                    if app.config.get('LOGIN_DEBUG'):
+                        print(f"[FACTURA-X EXCEPTION] {e}")
 
-            # Enviar Correo automáticamente si existe correo_cli
+            # Enviar Correo automáticamente si existe correo_cli (solo si no es caja variable)
             email_sent = False
             email_error = None
-            if correo_cli:
+            if correo_cli and not skip_api:
                 try:
                     # Preparar contenido común (Texto y HTML del comprobante)
                     subject = f'Comprobante de Venta Club Recrear OPEN DAY'

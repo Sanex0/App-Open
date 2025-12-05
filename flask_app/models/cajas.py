@@ -4,6 +4,7 @@ class Caja:
     def __init__(self, data):
         self.id_caja = data['id_caja']
         self.detalle_caja = data['detalle_caja']
+        self.es_variable = data.get('es_variable', 0)
         self.vta_club_id_club = data['vta_club_id_club']
 
     @classmethod

@@ -306,13 +306,277 @@
             .total-value { font-size: 1.2rem; }
             .container { padding-left: 10px; padding-right: 10px; }
         }
+        /* Modal Precio Variable */
+        .modal-precio-variable-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-precio-variable {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 380px;
+            width: 90%;
+            padding: 0;
+            position: relative;
+            animation: slideDown 0.4s ease;
+            overflow: hidden;
+        }
+
+        .modal-header-stripe {
+            background: linear-gradient(135deg, #006bc2 0%, #005da6 100%);
+            padding: 25px 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-header-stripe::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+        }
+
+        .modal-body-content {
+            padding: 30px;
+        }
+
+        .modal-header-stripe h2 {
+            color: white;
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 1.4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-header-stripe p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0;
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 576px) {
+            .modal-precio-variable {
+                max-width: 95%;
+            }
+            .modal-header-stripe {
+                padding: 20px;
+            }
+            .modal-header-stripe h2 {
+                font-size: 1.3rem;
+            }
+            .modal-header-stripe p {
+                font-size: 0.8rem;
+            }
+            .modal-body-content {
+                padding: 20px;
+            }
+            .total-preview-value {
+                font-size: 1.8rem;
+            }
+            .form-group-variable {
+                margin-bottom: 15px;
+            }
+        }
+
+        .form-group-variable {
+            margin-bottom: 18px;
+        }
+
+        .form-group-variable label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-group-variable label i {
+            color: var(--primary-blue);
+        }
+
+        .form-group-variable input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e3f2fd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8fbff;
+        }
+
+        .form-group-variable input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(0, 107, 194, 0.1);
+            background: white;
+        }
+
+        .total-preview {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid #90caf9;
+        }
+
+        .total-preview-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .total-preview-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .btn-modal-confirm {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-modal-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 107, 194, 0.3);
+        }
+
+        .btn-modal-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .blur-background {
+            filter: blur(5px);
+            pointer-events: none;
+        }
+
+        .alert-modal {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-modal i {
+            color: #856404;
+            font-size: 1.2rem;
+        }
+
+        .alert-modal-text {
+            color: #856404;
+            font-size: 0.85rem;
+            margin: 0;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body class="has-total-bar fullscreen-form">
     
     {% include '_flash.html' %}
 
-    <div class="container">
+    {% if is_variable %}
+    <!-- Modal de Precio Variable -->
+    <div class="modal-precio-variable-overlay" id="modalPrecioVariable">
+        <div class="modal-precio-variable">
+            <div class="modal-header-stripe">
+                <h2><i class="bi bi-calculator-fill me-2"></i>Precio Variable</h2>
+                <p>Ingrese el precio y cantidad del producto</p>
+            </div>
+
+            <div class="modal-body-content">
+                {% if not apertura %}
+                <div class="alert-modal">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <p class="alert-modal-text"><strong>Caja Cerrada:</strong> No se pueden realizar ventas. Abra un turno primero.</p>
+                </div>
+                {% endif %}
+
+                <div class="form-group-variable">
+                <label for="precioVariable"><i class="bi bi-currency-dollar me-1"></i>Precio Unitario</label>
+                <input type="number" id="precioVariable" class="form-control" placeholder="0" min="0" step="1" {% if not apertura %}disabled{% endif %}>
+            </div>
+
+            <div class="form-group-variable">
+                <label for="cantidadVariable"><i class="bi bi-hash me-1"></i>Cantidad</label>
+                <input type="number" id="cantidadVariable" class="form-control" placeholder="1" min="1" value="1" step="1" {% if not apertura %}disabled{% endif %}>
+            </div>
+
+            <div class="total-preview">
+                <div class="total-preview-label">Total a Pagar</div>
+                <div class="total-preview-value" id="totalVariableDisplay">$0</div>
+            </div>
+
+                <div class="d-flex gap-2">
+                    <a href="/index.html" class="btn btn-outline-secondary" style="flex: 1; padding: 12px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        <i class="bi bi-arrow-left me-2"></i>Volver
+                    </a>
+                    <button type="button" class="btn-modal-confirm" id="btnConfirmarVariable" disabled style="flex: 2;">
+                        {% if apertura %}
+                        Continuar al Pago <i class="bi bi-arrow-right ms-2"></i>
+                        {% else %}
+                        <i class="bi bi-lock-fill me-2"></i>Caja Cerrada
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="container" id="mainContainer">
         <div class="main-card">
             
             <div class="card-header-custom mb-3">
@@ -352,15 +616,18 @@
                 </div>
                 {% endif %}
 
+                {% if not is_variable %}
                 <div class="mb-4 position-relative px-3 pt-2">
                     <span class="position-absolute top-50 start-0 translate-middle-y ms-4 text-muted"><i class="bi bi-search"></i></span>
                     <input type="text" id="searchInput" class="form-control rounded-pill ps-5 py-3 border-0 bg-white" 
                         placeholder="Buscar producto..." onkeyup="filtrarProductos()">
                 </div>
+                {% endif %}
 
                 <form method="post" action="/pago" id="formPago" class="js-disable-on-submit">
                     <input type="hidden" name="id_caja" value="{{ id_caja }}">
 
+                    {% if not is_variable %}
                     <div class="product-grid">
                         <div class="row g-3" id="productsContainer">
                             
@@ -412,8 +679,9 @@
                             <p>No encontramos productos con ese nombre.</p>
                         </div>
                     </div>
+                    {% endif %}
 
-                    <div class="total-bar">
+                    <div class="total-bar" {% if is_variable %}style="display:none;"{% endif %}>
                         <div>
                             <span class="total-label">Total Estimado:</span>
                             <span class="total-value" id="displayTotal">$0</span>
@@ -434,6 +702,96 @@
     <script>
         // Indica si la caja tiene una apertura activa (valor booleano en JS)
         const cajaOpen = {{ 'true' if apertura else 'false' }};
+        const isVariableCaja = {{ 'true' if is_variable else 'false' }};
+
+        // ===== MODAL PRECIO VARIABLE =====
+        {% if is_variable %}
+        (function(){
+            const mainContainer = document.getElementById('mainContainer');
+            const modal = document.getElementById('modalPrecioVariable');
+            const precioInput = document.getElementById('precioVariable');
+            const cantidadInput = document.getElementById('cantidadVariable');
+            const totalDisplay = document.getElementById('totalVariableDisplay');
+            const btnConfirmar = document.getElementById('btnConfirmarVariable');
+            const cajaAbierta = {{ 'true' if apertura else 'false' }};
+
+            // Aplicar blur al fondo
+            if(mainContainer) mainContainer.classList.add('blur-background');
+
+            function calcularTotal(){
+                const precio = parseFloat(precioInput.value) || 0;
+                const cantidad = parseInt(cantidadInput.value) || 0;
+                const total = precio * cantidad;
+                
+                totalDisplay.textContent = '$' + Math.round(total).toLocaleString('es-CL');
+                
+                // Habilitar/deshabilitar botón (solo si caja está abierta)
+                btnConfirmar.disabled = !cajaAbierta || !(precio > 0 && cantidad > 0);
+            }
+
+            precioInput.addEventListener('input', calcularTotal);
+            cantidadInput.addEventListener('input', calcularTotal);
+
+            btnConfirmar.addEventListener('click', function(){
+                const precio = parseFloat(precioInput.value) || 0;
+                const cantidad = parseInt(cantidadInput.value) || 0;
+                
+                if(precio <= 0 || cantidad <= 0) return;
+
+                // Obtener el primer producto de la caja (debería ser único)
+                const primerProducto = {{ productos[0].id_producto if productos else 'null' }};
+                const precioProducto = precio;
+
+                if(!primerProducto){
+                    alert('Error: No hay productos asignados a esta caja.');
+                    return;
+                }
+
+                // Simular la selección del producto con el precio y cantidad especificados
+                // Guardar en sessionStorage para que se use en el flujo de pago
+                const productoData = {
+                    id_producto: primerProducto,
+                    id_prod: {{ productos[0].id_prod if productos else 'null' }},
+                    cantidad: cantidad,
+                    precio: precioProducto
+                };
+
+                sessionStorage.setItem('producto_variable', JSON.stringify(productoData));
+
+                // Redirigir directamente a confirmación de pago con los datos
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/pago';
+                
+                const inputCaja = document.createElement('input');
+                inputCaja.type = 'hidden';
+                inputCaja.name = 'id_caja';
+                inputCaja.value = '{{ id_caja }}';
+                form.appendChild(inputCaja);
+
+                const inputProducto = document.createElement('input');
+                inputProducto.type = 'hidden';
+                inputProducto.name = 'productos';
+                inputProducto.value = primerProducto;
+                form.appendChild(inputProducto);
+
+                const inputCantidad = document.createElement('input');
+                inputCantidad.type = 'hidden';
+                inputCantidad.name = 'cantidad_' + primerProducto;
+                inputCantidad.value = cantidad;
+                form.appendChild(inputCantidad);
+
+                const inputPrecioVariable = document.createElement('input');
+                inputPrecioVariable.type = 'hidden';
+                inputPrecioVariable.name = 'precio_variable';
+                inputPrecioVariable.value = precioProducto;
+                form.appendChild(inputPrecioVariable);
+
+                document.body.appendChild(form);
+                form.submit();
+            });
+        })();
+        {% endif %}
 
         // Si la caja está cerrada, desactivar controles de compra
         function disableComprarUI(){

@@ -41,7 +41,7 @@ class Producto:
                 p.KitVirtual as kitvirtual
             FROM flexline.ListaPrecioD l
             JOIN flexline.producto p ON l.Empresa = p.EMPRESA AND l.Producto = p.PRODUCTO
-            WHERE l.IdLisPrecio = 176 AND p.PRODUCTO IN ({placeholders})
+            WHERE l.IdLisPrecio IN (176, 168) AND p.PRODUCTO IN ({placeholders})
             ORDER BY p.GLOSA;
         """
         

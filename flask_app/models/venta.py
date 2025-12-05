@@ -12,9 +12,16 @@ class Venta:
     @classmethod
     def create(cls, data_venta, items):
         # Crear la venta principal
+        # Se agregan campos nuevos: id_correlativo_flex (NOT NULL) y envio_boleta
+        # Si no vienen en data_venta, se asumen valores por defecto (0)
+        if 'id_correlativo_flex' not in data_venta:
+            data_venta['id_correlativo_flex'] = 0
+        if 'envio_boleta' not in data_venta:
+            data_venta['envio_boleta'] = 0
+
         query_venta = """
-            INSERT INTO vta_ventas (total_ventas, id_apertura, envio_correo, id_cliente_fk) 
-            VALUES (%(total_ventas)s, %(id_apertura)s, %(envio_correo)s, %(id_cliente_fk)s);
+            INSERT INTO vta_ventas (total_ventas, id_apertura, envio_correo, id_cliente_fk, id_correlativo_flex, envio_boleta) 
+            VALUES (%(total_ventas)s, %(id_apertura)s, %(envio_correo)s, %(id_cliente_fk)s, %(id_correlativo_flex)s, %(envio_boleta)s);
         """
         id_venta = connectToMySQL('sistemas').query_db(query_venta, data_venta)
 
