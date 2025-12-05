@@ -8,8 +8,8 @@ class MySQLConnection:
         connection = pymysql.connect(
             host=os.environ.get('DB_HOST', '181.212.204.13'),
             port=int(os.environ.get('DB_PORT', 3306)),
-            user=os.environ.get('DB_USER', 'root'),
-            password=os.environ.get('DB_PASSWORD', '1Qazxsw2123_?'),
+            user=os.environ.get('DB_USER', 'sistemasu'),
+            password=os.environ.get('DB_PASSWORD', '5rTF422.3E'),
             db=db,
             charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
