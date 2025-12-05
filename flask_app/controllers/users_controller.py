@@ -2,6 +2,7 @@ import smtplib
 import json
 import requests
 import pprint
+import random
 from decimal import Decimal
 from email.message import EmailMessage
 from datetime import datetime
@@ -53,15 +54,31 @@ def send_email(to_address, subject, body, html_body=None, sender=None, attachmen
     Lanza excepciones en caso de error para que el llamador las maneje.
     attachments: lista de dicts con keys 'filename', 'content' (bytes), 'maintype', 'subtype'
     """
-    mail_server = app.config.get('MAIL_SERVER', 'localhost')
-    mail_port = int(app.config.get('MAIL_PORT', 25) or 25)
-    mail_user = app.config.get('MAIL_USERNAME')
-    mail_pass = app.config.get('MAIL_PASSWORD')
-    mail_use_tls = app.config.get('MAIL_USE_TLS', False)
+    # Credenciales SMTP múltiples para balanceo de carga (cPanel)
+    # Cada correo usa su contraseña correspondiente según el índice
+    smtp_users = [
+        "no-responder@clubrecrear.cl",
+        "no-responder1@clubrecrear.cl",
+        "no-responder2@clubrecrear.cl"
+    ]
+    smtp_passwords = [
+        "++&x,TyMji!;",
+        "L7MVjISZvw1t",
+        "3RJC^Of(L_t}"
+    ]
+    
+    # Seleccionar credenciales aleatorias (correo y su contraseña correspondiente por índice)
+    indice = random.randint(0, len(smtp_users) - 1)
+    mail_user = smtp_users[indice]
+    mail_pass = smtp_passwords[indice]
+    
+    mail_server = app.config.get('MAIL_SERVER', 'mail.clubrecrear.cl')
+    mail_port = int(app.config.get('MAIL_PORT', 465) or 465)
+    mail_use_tls = app.config.get('MAIL_USE_TLS', True)
     mail_use_ssl = app.config.get('MAIL_USE_SSL', False)
     sender = sender or app.config.get('MAIL_DEFAULT_SENDER', None)
     # If we have SMTP credentials, prefer using the authenticated user as sender
-    effective_sender = app.config.get('MAIL_USERNAME') or sender or f'no-reply@{mail_server}'
+    effective_sender = mail_user or sender or f'no-reply@{mail_server}'
 
     msg = EmailMessage()
     msg['Subject'] = subject
@@ -675,7 +692,7 @@ def datos_cliente():
 
             if not id_venta:
                 flash('Hubo un error al registrar la venta en la base de datos.', 'danger')
-                return redirect(url_for('ver_caja', id_cja=int(id_caja)))
+                return redirect(url_for('ver_caja', id_caja=int(id_caja)))
 
             # 4. Registrar medio de pago en vta_mediopago
             medio = cliente_temp.get('medio_pago') or request.form.get('medio_pago')
@@ -834,10 +851,11 @@ def datos_cliente():
                     if app.config.get('LOGIN_DEBUG'):
                         print(f"[FACTURA-X EXCEPTION] {e}")
 
-            # Enviar Correo automáticamente si existe correo_cli (solo si no es caja variable)
+            # Enviar Correo automáticamente si existe correo_cli
+            # Solo envía comprobante de pago, el agente enviará la boleta después
             email_sent = False
             email_error = None
-            if correo_cli and not skip_api:
+            if correo_cli:
                 try:
                     # Preparar contenido común (Texto y HTML del comprobante)
                     subject = f'Comprobante de Venta Club Recrear OPEN DAY'
@@ -856,8 +874,13 @@ def datos_cliente():
                         saludo = "Estimado/a Cliente"
 
                     body = (
-                        f"{saludo},\n\nGracias por su compra.\n\nResumen:\n"
-                        f"- Nº Venta: {id_venta}\n- Total: ${total_num:,}\n- Fecha: {now}\n\nSaludos,\nClub Recrear"
+                        f"{saludo},\n\nGracias por su compra.\n\n"
+                        f"Resumen:\n"
+                        f"- Nº Venta: {id_venta}\n"
+                        f"- Total: ${total_num:,}\n"
+                        f"- Fecha: {now}\n\n"
+                        f"Su boleta electrónica será enviada en un correo separado.\n\n"
+                        f"Saludos,\nClub Recrear"
                     )
                     
                     # Render HTML voucher for email
@@ -870,46 +893,14 @@ def datos_cliente():
                         id_voucher=id_voucher_val
                     )
 
-                    # Configurar mensaje
-                    # msg = EmailMessage()
-                    # msg['Subject'] = subject
-                    # msg['From'] = 'no-reply@clubrecrear.cl'
-                    # msg['To'] = correo_cli
-                    # msg.set_content(body)
-                    # msg.add_alternative(html_body, subtype='html')
-
+                    # NO adjuntar PDF - el agente lo enviará después
                     attachments_list = []
-                    # Adjuntar PDF si existe
-                    if api_success and pdf_link:
-                        try:
-                            download_headers = headers if "services.factura-x.com" in pdf_link else {}
-                            pdf_response = requests.get(pdf_link, headers=download_headers, timeout=15)
-                            
-                            if pdf_response.status_code == 200:
-                                pdf_content = pdf_response.content
-                                attachments_list.append({
-                                    'content': pdf_content,
-                                    'maintype': 'application',
-                                    'subtype': 'pdf',
-                                    'filename': f"boleta_{rut_final}.pdf"
-                                })
-                                # msg.add_attachment(pdf_content, maintype='application', subtype='pdf', filename=f"boleta_{rut_final}.pdf")
-                            else:
-                                print(f"[PDF ERROR] Status: {pdf_response.status_code}")
-                        except Exception as e:
-                            print(f"[PDF ATTACH ERROR] {e}")
-                            flash(f'Error adjuntando PDF: {e}', 'warning')
 
-                    # Enviar usando la función auxiliar send_email
+                    # Enviar usando la función auxiliar send_email (solo comprobante)
                     send_email(correo_cli, subject, body, html_body=html_body, attachments=attachments_list)
                     
-                    # with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
-                    #     smtp.starttls()
-                    #     smtp.login('michigato0405@gmail.com', 'fdir lsmj argz rrrv')
-                    #     smtp.send_message(msg)
-                    
                     email_sent = True
-                    # flash(f'Resumen de compra enviado a {correo_cli}', 'success')
+                    # flash(f'Comprobante de compra enviado a {correo_cli}', 'success')
 
                 except Exception as e:
                     email_error = str(e)
